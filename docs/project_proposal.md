@@ -25,7 +25,7 @@ Measured from `artifacts/cpu_baseline_metrics.json` on synthetic small graph:
 - Nodes: 1000
 - Edges: 5000
 - Iterations: 16
-- Elapsed seconds: 0.109798999999839
+- Elapsed seconds: 0.09647519999998622
 - Final L1 delta: 6.046211883552536e-07
 - Rank sum: 1.0
 - CPU mode: NumPy CSR loop
