@@ -1,0 +1,36 @@
+project_id: C3
+title: PageRank
+track: Graph and Sparse
+algorithm:
+  alpha: 0.85
+  tolerance: 1.0e-6
+  max_iter: 200
+dataset:
+  mode: synthetic
+  edges_path: null
+  snap_graphs:
+    - roadNet-CA
+    - com-Youtube
+    - wiki-Talk
+    - amazon0601
+    - soc-LiveJournal1
+  synthetic_sizes:
+    small: {nodes: 1000, edges: 5000}
+    medium: {nodes: 10000, edges: 50000}
+    large: {nodes: 100000, edges: 500000}
+gpu:
+  enabled: auto
+benchmark:
+  target_graph: com-Youtube
+  target_seconds: 5.0
+  target_speedup_min: 15
+  target_speedup_max: 60
+outputs:
+  - artifacts/cpu_baseline_metrics.json
+  - artifacts/profile_summary.json
+  - artifacts/benchmarks.csv
+  - artifacts/benchmark_summary.json
+open_questions:
+  - Team member names (use TODO until known)
+  - SNAP dataset paths if available locally
+  - GPU model and VRAM if available
