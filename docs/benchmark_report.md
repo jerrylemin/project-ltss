@@ -12,16 +12,20 @@ Outputs:
 - `artifacts/benchmarks.csv`
 - `artifacts/benchmark_summary.json`
 - `artifacts/gpu_benchmark_summary.json`
+- `artifacts/roadnet_ca_sample_benchmarks.csv`
+- `artifacts/synthetic_scale_benchmarks.csv`
+- `artifacts/final_performance_summary.json`
 
 ## Current Results
 
-| Backend | Version | Graph | Nodes | Edges | Iterations | Elapsed seconds | Note |
-|---------|---------|-------|-------|-------|------------|-----------------|------|
-| CPU | numpy_loop | synthetic_small | 1000 | 5000 | 16 | 0.08547079999880225 | baseline |
-| GPU | v1 | synthetic_small | 1000 | 5000 | 16 | 32.435255999998844 | CUDA run, launch/JIT overhead included |
-| GPU | v2 | synthetic_small | 1000 | 5000 | 16 | 0.21155370000087714 | CUDA fused kernel |
-| GPU | v3_pull | synthetic_small | 1000 | 5000 | 16 | 0.11875180000060936 | pull mode |
-| GPU | v3_push | synthetic_small | 1000 | 5000 | 16 | 0.22805960000005143 | push mode with atomic add |
+Warmup is excluded from GPU timings. CPU timings use the NumPy CSR loop. The SNAP row uses a roadNet-CA-derived 200k-edge sample because full roadNet-CA is too large for a fast Python CPU-loop demo.
+
+| graph_name | nodes | edges | CPU time | GPU V2 time | GPU V3 pull time | best speedup | relative error | note |
+|------------|------:|------:|---------:|------------:|-----------------:|-------------:|---------------:|------|
+| roadNet-CA-sample200k | 72767 | 200000 | 7.697041500001433 | 0.12074580000080459 | 0.01401340000120399 | 549.262955409831 | 6.526240627828615e-16 | SNAP-derived sample |
+| synthetic_large | 100000 | 500000 | 7.975994500000525 | 0.16064969999933965 | 0.01300710000032268 | 613.2031351955975 | 4.59684568716672e-16 | scale fallback evidence |
+| synthetic_medium | 10000 | 50000 | 0.8015663999995013 | 0.11271289999967848 | 0.006246900000405731 | 128.3142678684532 | 1.624575311515858e-16 | synthetic fallback |
+| synthetic_small | 1000 | 5000 | 0.11504680000143708 | 0.10220639999897685 | 0.005101900000227033 | 22.54979517362503 | 1.0936889414947526e-16 | default demo |
 
 ## CUDA Status
 
@@ -30,8 +34,8 @@ Outputs:
 - Python package: `numba-cuda==0.30.2`.
 - `cuda.is_available()`: true.
 - GPU relative error vs CPU: about 1e-16 on all successful versions.
-- Current synthetic small graph is too small to demonstrate speedup; it validates CUDA execution and correctness.
+- V3 pull keeps rank vectors on device and copies only reduction scalars during iterations.
 
 ## SNAP Status
 
-SNAP real datasets are pending local download. The runner supports `--edges-path` for `data/raw/com-youtube.ungraph.txt`, `data/raw/roadNet-CA.txt`, and `data/raw/amazon0601.txt`. A tiny `data/raw/sample_snap.txt` smoke dataset can be generated with `scripts/download_snap_sample.ps1`.
+SNAP roadNet-CA was downloaded locally as `data/raw/roadNet-CA.txt.gz` and sampled into `data/raw/roadNet-CA.sample200000.txt`; both are ignored by git. The committed evidence uses `artifacts/roadnet_ca_sample_benchmarks.csv`. The runner also supports `--edges-path` for `data/raw/com-youtube.ungraph.txt`, `data/raw/roadNet-CA.txt`, and `data/raw/amazon0601.txt`.

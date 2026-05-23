@@ -1,0 +1,57 @@
+{
+  "summary": [
+    {
+      "graph_name": "roadNet-CA-sample200k",
+      "num_nodes": 72767,
+      "num_edges": 200000,
+      "cpu_time": 7.697041500001433,
+      "gpu_v2_time": 0.12074580000080459,
+      "gpu_v3_pull_time": 0.01401340000120399,
+      "best_version": "v3_pull",
+      "best_speedup": 549.262955409831,
+      "relative_error": 6.526240627828615e-16,
+      "note": "warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration."
+    },
+    {
+      "graph_name": "synthetic_large",
+      "num_nodes": 100000,
+      "num_edges": 500000,
+      "cpu_time": 7.975994500000525,
+      "gpu_v2_time": 0.16064969999933965,
+      "gpu_v3_pull_time": 0.01300710000032268,
+      "best_version": "v3_pull",
+      "best_speedup": 613.2031351955975,
+      "relative_error": 4.59684568716672e-16,
+      "note": "warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration."
+    },
+    {
+      "graph_name": "synthetic_medium",
+      "num_nodes": 10000,
+      "num_edges": 50000,
+      "cpu_time": 0.8015663999995013,
+      "gpu_v2_time": 0.11271289999967848,
+      "gpu_v3_pull_time": 0.006246900000405731,
+      "best_version": "v3_pull",
+      "best_speedup": 128.3142678684532,
+      "relative_error": 1.624575311515858e-16,
+      "note": "warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration."
+    },
+    {
+      "graph_name": "synthetic_small",
+      "num_nodes": 1000,
+      "num_edges": 5000,
+      "cpu_time": 0.11504680000143708,
+      "gpu_v2_time": 0.10220639999897685,
+      "gpu_v3_pull_time": 0.005101900000227033,
+      "best_version": "v3_pull",
+      "best_speedup": 22.54979517362503,
+      "relative_error": 1.0936889414947526e-16,
+      "note": "warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration."
+    }
+  ],
+  "sources": [
+    "artifacts\\benchmarks.csv",
+    "artifacts\\roadnet_ca_sample_benchmarks.csv",
+    "artifacts\\synthetic_scale_benchmarks.csv"
+  ]
+}

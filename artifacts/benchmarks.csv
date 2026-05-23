@@ -1,6 +1,6 @@
-backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,note
-cpu,numpy_loop,synthetic_small,1000,5000,16,0.08547079999880225,187.19843502370654,1.0,0.0,True,
-gpu,v1,synthetic_small,1000,5000,16,32.435255999998844,0.4932903874722176,0.0026351202530605984,1.4051260155412137e-16,True,
-gpu,v2,synthetic_small,1000,5000,16,0.21155370000087714,75.63091545992181,0.4040146780625811,1.4051260155412137e-16,True,
-gpu,v3_pull,synthetic_small,1000,5000,16,0.11875180000060936,134.7347998086589,0.7197431954577839,1.4051260155412137e-16,True,pull_gather reuses the fused v2 kernel for stable correctness.
-gpu,v3_push,synthetic_small,1000,5000,16,0.22805960000005143,70.15709928455716,0.3747739625904061,1.3791051634015616e-16,True,"If atomic float support is unavailable on the device, caller should skip this mode."
+backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,warmup_excluded,note
+cpu,numpy_loop,synthetic_small,1000,5000,16,0.11504680000143708,139.0738377755847,1.0,0.0,True,False,
+gpu,v1,synthetic_small,1000,5000,16,0.13921929999924032,114.92659423001916,0.8263710563267079,1.4051260155412137e-16,True,True,warmup excluded
+gpu,v2,synthetic_small,1000,5000,16,0.10220639999897685,156.54596972557658,1.1256320543780896,1.4051260155412137e-16,True,True,warmup excluded
+gpu,v3_pull,synthetic_small,1000,5000,16,0.005101900000227033,3136.08655584939,22.54979517362503,1.0936889414947526e-16,True,True,warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration.
+gpu,v3_push,synthetic_small,1000,5000,16,0.1489504000001034,107.41830837640512,0.7723832900170609,1.3883208818676884e-16,True,True,"warmup excluded; If atomic float support is unavailable on the device, caller should skip this mode."

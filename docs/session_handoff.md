@@ -1,7 +1,7 @@
 # Session Handoff
 
-- Last updated: 2026-05-23T11:58:00+07:00.
-- Completed phases: repo prep, Graphify update, environment check, CPU baseline, tests, CPU profile, optional GPU kernels, benchmark harness, CUDA enablement, SNAP runner, final docs.
+- Last updated: 2026-05-23T12:31:00+07:00.
+- Completed phases: repo prep, Graphify update, environment check, CPU baseline, tests, CPU profile, optional GPU kernels, benchmark harness, CUDA enablement, SNAP runner, final performance evidence.
 - Files updated: `src/gpu/cuda_utils.py`, `src/benchmark.py`, `src/data_loader.py`, `tests/`, `scripts/`, `docs/`, `artifacts/*.json`, `artifacts/benchmarks.csv`.
 - Commands run:
   - `git pull --ff-only origin main`: already up to date.
@@ -14,9 +14,13 @@
   - `powershell -ExecutionPolicy Bypass -File scripts/run_gpu_smoke.ps1`: 1 passed, 2 Numba occupancy warnings on toy graph.
   - `powershell -ExecutionPolicy Bypass -File scripts/run_gpu_benchmark.ps1`: generated real GPU rows for v1, v2, v3_pull, v3_push.
   - `powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1`: created ignored sample under `data/raw/sample_snap.txt`.
-- Test status: full suite passed, `10 passed`; GPU smoke passed, `1 passed`.
-- Benchmark status: generated `artifacts/benchmarks.csv`, `artifacts/benchmark_summary.json`, and `artifacts/gpu_benchmark_summary.json`; latest synthetic CPU row elapsed `0.08547079999880225s`.
+  - `powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1 -Graph roadNet-CA -Download -MaxEdges 200000`: downloaded roadNet-CA `.gz` locally and prepared ignored `data/raw/roadNet-CA.sample200000.txt`.
+  - `.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --edges-path data/raw/roadNet-CA.sample200000.txt --graph-name roadNet-CA-sample200k --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/roadnet_ca_sample_benchmarks.csv`: V3 pull speedup `549.262955409831x`.
+  - `.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --sizes medium,large --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/synthetic_scale_benchmarks.csv`: synthetic_large V3 pull speedup `613.2031351955975x`.
+  - `.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --gpu`: default synthetic_small GPU benchmark, V3 pull speedup `22.54979517362503x`.
+- Test status: full suite passed, `10 passed`; GPU smoke remains covered by optional GPU test.
+- Benchmark status: generated `artifacts/benchmarks.csv`, `artifacts/benchmark_summary.json`, `artifacts/gpu_benchmark_summary.json`, `artifacts/roadnet_ca_sample_benchmarks.csv`, `artifacts/synthetic_scale_benchmarks.csv`, and `artifacts/final_performance_summary.json`.
 - GPU available: yes through `numba-cuda==0.30.2` after CUDA Toolkit 13.2 path is loaded.
 - Graphify status: available; local output generated and ignored.
-- Remaining work: add real SNAP dataset paths if available, tune kernels on larger graphs where GPU has enough work to amortize launch overhead.
+- Remaining work: optional full SNAP benchmark on `roadNet-CA.txt`, `amazon0601.txt`, or `com-youtube.ungraph.txt` if the CPU baseline runtime budget allows.
 - Resume command: `.venv\Scripts\python.exe -m pytest -q`.

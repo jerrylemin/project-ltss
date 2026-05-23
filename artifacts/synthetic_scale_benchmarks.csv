@@ -1,0 +1,9 @@
+backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,warmup_excluded,note
+cpu,numpy_loop,synthetic_medium,10000,50000,16,0.8015663999995013,19.960916525455602,1.0,0.0,True,False,
+gpu,v2,synthetic_medium,10000,50000,16,0.11271289999967848,141.95358295319915,7.1115764034266515,1.5265227775417e-16,True,True,warmup excluded
+gpu,v3_pull,synthetic_medium,10000,50000,16,0.006246900000405731,2561.270389947144,128.3142678684532,1.624575311515858e-16,True,True,warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration.
+gpu,v3_push,synthetic_medium,10000,50000,16,0.1161099999990256,137.80036172710595,6.903508741764086,1.529063876383463e-16,True,True,"warmup excluded; If atomic float support is unavailable on the device, caller should skip this mode."
+cpu,numpy_loop,synthetic_large,100000,500000,16,7.975994500000525,2.0060194374505835,1.0,0.0,True,False,
+gpu,v2,synthetic_large,100000,500000,16,0.16064969999933965,99.59557969959339,49.64836224427005,8.76041708115392e-17,True,True,warmup excluded
+gpu,v3_pull,synthetic_large,100000,500000,16,0.01300710000032268,1230.0974083080066,613.2031351955975,4.59684568716672e-16,True,True,warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration.
+gpu,v3_push,synthetic_large,100000,500000,16,0.1706209999993007,93.77509216371712,46.746851208428126,8.999915646990073e-17,True,True,"warmup excluded; If atomic float support is unavailable on the device, caller should skip this mode."

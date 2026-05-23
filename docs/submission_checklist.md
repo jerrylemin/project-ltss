@@ -11,6 +11,8 @@
 - [x] artifacts/benchmarks.csv ton tai
 - [x] artifacts/environment_check.json ton tai
 - [x] artifacts/gpu_benchmark_summary.json ton tai khi CUDA usable
+- [x] artifacts/roadnet_ca_sample_benchmarks.csv co SNAP-derived benchmark evidence
+- [x] artifacts/synthetic_scale_benchmarks.csv co synthetic medium/large fallback evidence
 - [x] GPU code ton tai va skip sach khi khong co CUDA
 - [x] GPU smoke test pass khi CUDA kha dung
 - [x] docs/cuda_setup.md va docs/dataset_setup.md ton tai

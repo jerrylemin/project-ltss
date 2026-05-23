@@ -10,8 +10,9 @@
 - Team member roles filled in proposal and README.
 - CUDA Toolkit 13.2 plus `numba-cuda` validated; GPU smoke and benchmark scripts added.
 - SNAP sample runner and dataset setup docs added.
+- Final performance evidence generated for roadNet-CA sample, synthetic_medium, and synthetic_large.
+- V3 pull optimized with device-side reductions and warmup-excluded benchmark timing.
 
 ## Pending
 
-- Run with real SNAP datasets if local paths become available.
-- Tune GPU kernels on larger SNAP graphs; current synthetic small graph is dominated by launch/JIT overhead.
+- Optional full SNAP benchmark if CPU baseline runtime is acceptable.

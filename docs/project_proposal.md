@@ -25,7 +25,7 @@ Measured from `artifacts/cpu_baseline_metrics.json` on synthetic small graph:
 - Nodes: 1000
 - Edges: 5000
 - Iterations: 16
-- Elapsed seconds: 0.08893630000056874
+- Elapsed seconds: 0.13196079999943322
 - Final L1 delta: 6.046211883552536e-07
 - Rank sum: 1.0
 - CPU mode: NumPy CSR loop
@@ -47,9 +47,16 @@ Profile results in `artifacts/profile_summary.json` show `run_pagerank_cpu` and 
 | GPU V2 | Fused SpMV+damping+L1 reduction | 15-40x |
 | GPU V3 | Push vs Pull comparison, warp reduction | 30-60x |
 
-## Preliminary GPU Result
+## Final GPU Evidence
 
-CUDA is usable on the current demo machine after installing CUDA Toolkit 13.2 and `numba-cuda==0.30.2`. GPU benchmark rows are generated for V1, V2, V3 pull, and V3 push on the synthetic small graph. The graph is intentionally small for CI/demo, so GPU speedups are below CPU because kernel launch and JIT overhead dominate; relative error versus CPU remains around 1e-16.
+CUDA is usable on the current demo machine after installing CUDA Toolkit 13.2 and `numba-cuda==0.30.2`. V3 pull was optimized to keep rank vectors on device and copy only scalar reductions during iterations. GPU benchmark timings exclude warmup/JIT.
+
+| Graph | CPU time | V3 pull time | Speedup | Relative error |
+|-------|---------:|-------------:|--------:|---------------:|
+| roadNet-CA-sample200k | 7.697041500001433 | 0.01401340000120399 | 549.262955409831x | 6.526240627828615e-16 |
+| synthetic_large | 7.975994500000525 | 0.01300710000032268 | 613.2031351955975x | 4.59684568716672e-16 |
+
+Full roadNet-CA was downloaded locally but not committed. The measured SNAP evidence uses a 200k-edge roadNet-CA sample to keep CPU baseline runtime reasonable for demo.
 
 ## Risk Analysis
 

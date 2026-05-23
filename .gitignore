@@ -8,6 +8,10 @@ __pycache__/
 .idea/
 data/raw/
 data/processed/
+!data/
+!data/raw/
+data/raw/*
+!data/raw/README.md
 artifacts/*.prof
 graphify-out/
 !artifacts/.gitkeep

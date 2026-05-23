@@ -30,6 +30,7 @@ Neu PowerShell chan activate script tren UNC path, dung truc tiep `.\.venv\Scrip
 .\.venv\Scripts\python.exe src/profile_cpu.py --config project_spec.yaml
 .\.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml
 .\.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --gpu
+.\.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --sizes medium,large --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/synthetic_scale_benchmarks.csv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
@@ -46,6 +47,8 @@ Tao sample nho:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1
+powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1 -Graph roadNet-CA -Download -MaxEdges 200000
+.\.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --edges-path data/raw/roadNet-CA.sample200000.txt --graph-name roadNet-CA-sample200k --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/roadnet_ca_sample_benchmarks.csv
 ```
 
 ## 6. Cau truc repo
@@ -80,10 +83,16 @@ Artifacts chinh:
 - `artifacts/benchmarks.csv`
 - `artifacts/benchmark_summary.json`
 - `artifacts/gpu_benchmark_summary.json`
+- `artifacts/roadnet_ca_sample_benchmarks.csv`
+- `artifacts/synthetic_scale_benchmarks.csv`
+- `artifacts/final_performance_summary.json`
 
-CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.08893630000056874s`, rank sum `1.0`.
+CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.13196079999943322s`, rank sum `1.0`.
 
-GPU benchmark da chay that tren RTX 3060 Laptop GPU cho `v1`, `v2`, `v3_pull`, `v3_push`. Synthetic small graph qua nho nen GPU chua nhanh hon CPU do launch/JIT overhead, nhung relative error so voi CPU o muc ~1e-16.
+GPU benchmark da chay that tren RTX 3060 Laptop GPU cho `v1`, `v2`, `v3_pull`, `v3_push`. V3 pull la ban nhanh nhat sau toi uu device-side reduction va warmup-excluded timing:
+
+- roadNet-CA-sample200k: CPU `7.697041500001433s`, V3 pull `0.01401340000120399s`, speedup `549.262955409831x`, relative error `6.526240627828615e-16`.
+- synthetic_large: CPU `7.975994500000525s`, V3 pull `0.01300710000032268s`, speedup `613.2031351955975x`, relative error `4.59684568716672e-16`.
 
 ## 9. Huong nop bai
 
