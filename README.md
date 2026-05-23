@@ -81,7 +81,7 @@ Artifacts chinh:
 - `artifacts/benchmark_summary.json`
 - `artifacts/gpu_benchmark_summary.json`
 
-CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.09647519999998622s`, rank sum `1.0`.
+CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.08893630000056874s`, rank sum `1.0`.
 
 GPU benchmark da chay that tren RTX 3060 Laptop GPU cho `v1`, `v2`, `v3_pull`, `v3_push`. Synthetic small graph qua nho nen GPU chua nhanh hon CPU do launch/JIT overhead, nhung relative error so voi CPU o muc ~1e-16.
 
