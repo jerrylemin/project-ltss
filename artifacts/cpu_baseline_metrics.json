@@ -1,0 +1,16 @@
+{
+  "alpha": 0.85,
+  "converged": true,
+  "elapsed_seconds": 0.08572260000073584,
+  "graph_name": "synthetic_small",
+  "iterations": 16,
+  "l1_delta": 6.046211883552536e-07,
+  "l1_error_vs_scipy": 1.43196001931023e-16,
+  "max_iter": 200,
+  "mode": "numpy_loop",
+  "num_edges": 5000,
+  "num_nodes": 1000,
+  "rank_sum": 1.0,
+  "relative_error_vs_scipy": 1.43196001931023e-16,
+  "tolerance": 1e-06
+}
