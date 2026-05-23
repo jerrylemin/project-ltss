@@ -1,0 +1,6 @@
+backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,note
+cpu,numpy_loop,synthetic_small,1000,5000,16,0.09340979999979027,171.2882374230105,1.0,0.0,False,
+gpu,v1,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
+gpu,v2,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
+gpu,v3_pull,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
+gpu,v3_push,synthetic_small,1000,5000,,,,,,False,skipped: no cuda

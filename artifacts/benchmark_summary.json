@@ -1,0 +1,81 @@
+{
+  "cuda_status": {
+    "cuda_available": false,
+    "device_name": null
+  },
+  "graph_name": "synthetic_small",
+  "num_edges": 5000,
+  "num_nodes": 1000,
+  "rows": [
+    {
+      "backend": "cpu",
+      "cuda_available": false,
+      "elapsed_seconds": 0.09340979999979027,
+      "graph_name": "synthetic_small",
+      "iterations": 16,
+      "iterations_per_second": 171.2882374230105,
+      "note": "",
+      "num_edges": 5000,
+      "num_nodes": 1000,
+      "relative_error_vs_cpu": 0.0,
+      "speedup_vs_cpu": 1.0,
+      "version": "numpy_loop"
+    },
+    {
+      "backend": "gpu",
+      "cuda_available": false,
+      "elapsed_seconds": null,
+      "graph_name": "synthetic_small",
+      "iterations": null,
+      "iterations_per_second": null,
+      "note": "skipped: no cuda",
+      "num_edges": 5000,
+      "num_nodes": 1000,
+      "relative_error_vs_cpu": null,
+      "speedup_vs_cpu": null,
+      "version": "v1"
+    },
+    {
+      "backend": "gpu",
+      "cuda_available": false,
+      "elapsed_seconds": null,
+      "graph_name": "synthetic_small",
+      "iterations": null,
+      "iterations_per_second": null,
+      "note": "skipped: no cuda",
+      "num_edges": 5000,
+      "num_nodes": 1000,
+      "relative_error_vs_cpu": null,
+      "speedup_vs_cpu": null,
+      "version": "v2"
+    },
+    {
+      "backend": "gpu",
+      "cuda_available": false,
+      "elapsed_seconds": null,
+      "graph_name": "synthetic_small",
+      "iterations": null,
+      "iterations_per_second": null,
+      "note": "skipped: no cuda",
+      "num_edges": 5000,
+      "num_nodes": 1000,
+      "relative_error_vs_cpu": null,
+      "speedup_vs_cpu": null,
+      "version": "v3_pull"
+    },
+    {
+      "backend": "gpu",
+      "cuda_available": false,
+      "elapsed_seconds": null,
+      "graph_name": "synthetic_small",
+      "iterations": null,
+      "iterations_per_second": null,
+      "note": "skipped: no cuda",
+      "num_edges": 5000,
+      "num_nodes": 1000,
+      "relative_error_vs_cpu": null,
+      "speedup_vs_cpu": null,
+      "version": "v3_push"
+    }
+  ]
+}
