@@ -1,9 +1,24 @@
 # Session Handoff
 
-- Last updated: pending first verification run.
-- Completed phases: scaffold in progress.
-- Commands run: repository cloned; Python/Git/CUDA checks started.
-- Test status: not run yet.
-- Benchmark status: not run yet.
-- GPU available: unknown to Numba; `nvidia-smi` detected an NVIDIA GPU, `nvcc` missing on PATH.
-- Next command: `python -m venv .venv`.
+- Last updated: 2026-05-23T11:15:22+07:00.
+- Completed phases: repo prep, environment check, spec/docs scaffold, CPU baseline, tests, CPU profile, optional GPU kernels, benchmark harness, final docs.
+- Files created: `project_spec.yaml`, `src/`, `tests/`, `docs/`, `scripts/`, `artifacts/*.json`, `artifacts/benchmarks.csv`.
+- Commands run:
+  - `git clone https://github.com/jerrylemin/project-ltss project-ltss`: cloned empty remote repo.
+  - `python --version`: Python 3.11.9.
+  - `git --version`: git 2.53.0.windows.1.
+  - `nvidia-smi`: detected NVIDIA GeForce RTX 3060 Laptop GPU, 6144 MiB VRAM, driver CUDA version 13.1.
+  - `nvcc --version`: command not found.
+  - `python -m venv .venv`: created venv; PowerShell activation blocked on UNC, so commands use `.venv\Scripts\python.exe` directly.
+  - `.venv\Scripts\python.exe src/cpu_baseline.py --config project_spec.yaml`: exit 0, wrote `artifacts/cpu_baseline_metrics.json`.
+  - `.venv\Scripts\python.exe src/profile_cpu.py --config project_spec.yaml`: exit 0, wrote `artifacts/profile_summary.json` and `docs/bottleneck_decision.md`.
+  - `.venv\Scripts\python.exe -c "from src.gpu.pagerank_gpu import run_pagerank_gpu; ..."`: import ok, Numba CUDA unavailable.
+  - `.venv\Scripts\python.exe -m pytest tests/test_gpu_optional.py -v`: 1 skipped.
+  - `.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml`: exit 0, CPU row plus GPU skipped rows.
+  - `.venv\Scripts\python.exe -m pytest -q`: 8 passed.
+- Test status: pass, 8 passed with full suite; GPU optional file skips cleanly when CUDA unavailable.
+- Benchmark status: generated `artifacts/benchmarks.csv` and `artifacts/benchmark_summary.json`.
+- GPU available: no to Numba CUDA; `nvidia-smi` sees hardware, `nvcc` missing from PATH.
+- Graphify status: unavailable/no Graphify output found.
+- Remaining work: fill team names, add SNAP dataset paths if available, rerun GPU benchmarks on a Numba-compatible CUDA setup.
+- Resume command: `.venv\Scripts\python.exe -m pytest -q`.

@@ -6,6 +6,8 @@
 - CPU PageRank baseline with synthetic and edge-list graph loading.
 - Optional GPU API and benchmark harness.
 - Test suite for config, data loader, correctness, CLI, and GPU skip behavior.
+- Profile and benchmark artifacts generated.
+- Final submission docs updated with measured CPU baseline and benchmark results.
 
 ## Pending
 
