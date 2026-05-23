@@ -25,3 +25,9 @@ def test_synthetic_toy_graph_is_valid():
     assert graph["num_nodes"] == 4
     assert graph["num_edges"] > 0
     assert len(graph["indptr"]) == graph["num_nodes"] + 1
+
+
+def test_fixture_snap_sample_loads():
+    graph = load_edge_list(Path("tests/fixtures/sample_snap.txt"))
+    assert graph["num_nodes"] == 4
+    assert graph["num_edges"] == 5

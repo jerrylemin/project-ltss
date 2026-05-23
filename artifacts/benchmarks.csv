@@ -1,6 +1,6 @@
 backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,note
-cpu,numpy_loop,synthetic_small,1000,5000,16,0.09340979999979027,171.2882374230105,1.0,0.0,False,
-gpu,v1,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
-gpu,v2,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
-gpu,v3_pull,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
-gpu,v3_push,synthetic_small,1000,5000,,,,,,False,skipped: no cuda
+cpu,numpy_loop,synthetic_small,1000,5000,16,0.08547079999880225,187.19843502370654,1.0,0.0,True,
+gpu,v1,synthetic_small,1000,5000,16,32.435255999998844,0.4932903874722176,0.0026351202530605984,1.4051260155412137e-16,True,
+gpu,v2,synthetic_small,1000,5000,16,0.21155370000087714,75.63091545992181,0.4040146780625811,1.4051260155412137e-16,True,
+gpu,v3_pull,synthetic_small,1000,5000,16,0.11875180000060936,134.7347998086589,0.7197431954577839,1.4051260155412137e-16,True,pull_gather reuses the fused v2 kernel for stable correctness.
+gpu,v3_push,synthetic_small,1000,5000,16,0.22805960000005143,70.15709928455716,0.3747739625904061,1.3791051634015616e-16,True,"If atomic float support is unavailable on the device, caller should skip this mode."

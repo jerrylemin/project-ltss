@@ -1,24 +1,22 @@
 # Session Handoff
 
-- Last updated: 2026-05-23T11:15:22+07:00.
-- Completed phases: repo prep, environment check, spec/docs scaffold, CPU baseline, tests, CPU profile, optional GPU kernels, benchmark harness, final docs.
-- Files created: `project_spec.yaml`, `src/`, `tests/`, `docs/`, `scripts/`, `artifacts/*.json`, `artifacts/benchmarks.csv`.
+- Last updated: 2026-05-23T11:58:00+07:00.
+- Completed phases: repo prep, Graphify update, environment check, CPU baseline, tests, CPU profile, optional GPU kernels, benchmark harness, CUDA enablement, SNAP runner, final docs.
+- Files updated: `src/gpu/cuda_utils.py`, `src/benchmark.py`, `src/data_loader.py`, `tests/`, `scripts/`, `docs/`, `artifacts/*.json`, `artifacts/benchmarks.csv`.
 - Commands run:
-  - `git clone https://github.com/jerrylemin/project-ltss project-ltss`: cloned empty remote repo.
-  - `python --version`: Python 3.11.9.
-  - `git --version`: git 2.53.0.windows.1.
-  - `nvidia-smi`: detected NVIDIA GeForce RTX 3060 Laptop GPU, 6144 MiB VRAM, driver CUDA version 13.1.
-  - `nvcc --version`: command not found.
-  - `python -m venv .venv`: created venv; PowerShell activation blocked on UNC, so commands use `.venv\Scripts\python.exe` directly.
-  - `.venv\Scripts\python.exe src/cpu_baseline.py --config project_spec.yaml`: exit 0, wrote `artifacts/cpu_baseline_metrics.json`.
-  - `.venv\Scripts\python.exe src/profile_cpu.py --config project_spec.yaml`: exit 0, wrote `artifacts/profile_summary.json` and `docs/bottleneck_decision.md`.
-  - `.venv\Scripts\python.exe -c "from src.gpu.pagerank_gpu import run_pagerank_gpu; ..."`: import ok, Numba CUDA unavailable.
-  - `.venv\Scripts\python.exe -m pytest tests/test_gpu_optional.py -v`: 1 skipped.
-  - `.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml`: exit 0, CPU row plus GPU skipped rows.
-  - `.venv\Scripts\python.exe -m pytest -q`: 8 passed.
-- Test status: pass, 8 passed with full suite; GPU optional file skips cleanly when CUDA unavailable.
-- Benchmark status: generated `artifacts/benchmarks.csv` and `artifacts/benchmark_summary.json`.
-- GPU available: no to Numba CUDA; `nvidia-smi` sees hardware, `nvcc` missing from PATH.
-- Graphify status: unavailable/no Graphify output found.
-- Remaining work: fill team names, add SNAP dataset paths if available, rerun GPU benchmarks on a Numba-compatible CUDA setup.
+  - `git pull --ff-only origin main`: already up to date.
+  - `graphify update .`: generated local `graphify-out/GRAPH_REPORT.md` with 168 nodes and 176 edges; `graphify-out/` is ignored as generated output.
+  - `nvidia-smi`: detected NVIDIA GeForce RTX 3060 Laptop GPU, 6144 MiB VRAM, driver 591.86.
+  - `winget install --id Nvidia.CUDA -e --accept-source-agreements --accept-package-agreements`: installed CUDA Toolkit 13.2.
+  - `nvcc -V`: CUDA compilation tools release 13.2, V13.2.78.
+  - `.venv\Scripts\python.exe -m pip install numba-cuda`: installed `numba-cuda==0.30.2`.
+  - `powershell -ExecutionPolicy Bypass -File scripts/check_cuda.ps1`: wrote `artifacts/environment_check.json`, `cuda_available: true`.
+  - `powershell -ExecutionPolicy Bypass -File scripts/run_gpu_smoke.ps1`: 1 passed, 2 Numba occupancy warnings on toy graph.
+  - `powershell -ExecutionPolicy Bypass -File scripts/run_gpu_benchmark.ps1`: generated real GPU rows for v1, v2, v3_pull, v3_push.
+  - `powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1`: created ignored sample under `data/raw/sample_snap.txt`.
+- Test status: full suite passed, `10 passed`; GPU smoke passed, `1 passed`.
+- Benchmark status: generated `artifacts/benchmarks.csv`, `artifacts/benchmark_summary.json`, and `artifacts/gpu_benchmark_summary.json`; latest synthetic CPU row elapsed `0.08547079999880225s`.
+- GPU available: yes through `numba-cuda==0.30.2` after CUDA Toolkit 13.2 path is loaded.
+- Graphify status: available; local output generated and ignored.
+- Remaining work: add real SNAP dataset paths if available, tune kernels on larger graphs where GPU has enough work to amortize launch overhead.
 - Resume command: `.venv\Scripts\python.exe -m pytest -q`.

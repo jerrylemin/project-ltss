@@ -17,20 +17,6 @@
   "num_nodes": 1000,
   "rows": [
     {
-      "backend": "cpu",
-      "cuda_available": true,
-      "elapsed_seconds": 0.08547079999880225,
-      "graph_name": "synthetic_small",
-      "iterations": 16,
-      "iterations_per_second": 187.19843502370654,
-      "note": "",
-      "num_edges": 5000,
-      "num_nodes": 1000,
-      "relative_error_vs_cpu": 0.0,
-      "speedup_vs_cpu": 1.0,
-      "version": "numpy_loop"
-    },
-    {
       "backend": "gpu",
       "cuda_available": true,
       "elapsed_seconds": 32.435255999998844,

@@ -3,7 +3,9 @@
 ## Title + Team
 
 - Title: PageRank
-- Team: TODO
+- Team:
+  - Le Minh, Team Leader, integration, docs, GitHub.
+  - Nguyen Vu Bach, GPU kernels, benchmark, testing.
 - Git URL: https://github.com/jerrylemin/project-ltss
 - Topic: C3 PageRank
 - Track: Graph and Sparse
@@ -23,7 +25,7 @@ Measured from `artifacts/cpu_baseline_metrics.json` on synthetic small graph:
 - Nodes: 1000
 - Edges: 5000
 - Iterations: 16
-- Elapsed seconds: 0.14562590000059572
+- Elapsed seconds: 0.109798999999839
 - Final L1 delta: 6.046211883552536e-07
 - Rank sum: 1.0
 - CPU mode: NumPy CSR loop
@@ -45,6 +47,10 @@ Profile results in `artifacts/profile_summary.json` show `run_pagerank_cpu` and 
 | GPU V2 | Fused SpMV+damping+L1 reduction | 15-40x |
 | GPU V3 | Push vs Pull comparison, warp reduction | 30-60x |
 
+## Preliminary GPU Result
+
+CUDA is usable on the current demo machine after installing CUDA Toolkit 13.2 and `numba-cuda==0.30.2`. GPU benchmark rows are generated for V1, V2, V3 pull, and V3 push on the synthetic small graph. The graph is intentionally small for CI/demo, so GPU speedups are below CPU because kernel launch and JIT overhead dominate; relative error versus CPU remains around 1e-16.
+
 ## Risk Analysis
 
 - GPU unavailable or CUDA runtime incompatible with Numba.
@@ -54,6 +60,5 @@ Profile results in `artifacts/profile_summary.json` show `run_pagerank_cpu` and 
 
 ## Division of Work
 
-- TODO: CPU baseline and data loader.
-- TODO: GPU kernels and benchmark.
-- TODO: docs, tests, and submission packaging.
+- Le Minh: integration, docs, GitHub, proposal, environment handoff.
+- Nguyen Vu Bach: GPU kernels, benchmark harness, testing and correctness checks.

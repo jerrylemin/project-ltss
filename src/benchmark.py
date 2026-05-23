@@ -10,7 +10,7 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import algorithm_params, load_config
-from src.data_loader import load_graph_from_config
+from src.data_loader import load_edge_list, load_graph_from_config
 from src.gpu.cuda_utils import cuda_available, cuda_status
 from src.gpu.pagerank_gpu import run_pagerank_gpu
 from src.metrics import relative_l1_error, write_json
@@ -43,11 +43,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Benchmark CPU and optional GPU PageRank.")
     parser.add_argument("--config", default="project_spec.yaml")
     parser.add_argument("--graph", default="small")
+    parser.add_argument("--edges-path", default=None, help="Optional SNAP-style edge-list path.")
+    parser.add_argument("--gpu", action="store_true", help="Run GPU rows when CUDA is available.")
     args = parser.parse_args(argv)
 
     config = load_config(args.config)
     alpha, tol, max_iter = algorithm_params(config)
-    graph = load_graph_from_config(config, graph_size=args.graph)
+    graph = load_edge_list(args.edges_path) if args.edges_path else load_graph_from_config(config, graph_size=args.graph)
 
     cpu_rank, cpu_metrics = run_pagerank_cpu(graph, alpha=alpha, tol=tol, max_iter=max_iter)
     cpu_elapsed = float(cpu_metrics["elapsed_seconds"])
@@ -139,6 +141,17 @@ def main(argv: list[str] | None = None) -> int:
             "cuda_status": cuda_status(),
         },
     )
+    if args.gpu:
+        write_json(
+            "artifacts/gpu_benchmark_summary.json",
+            {
+                "graph_name": graph["name"],
+                "num_nodes": graph["num_nodes"],
+                "num_edges": graph["num_edges"],
+                "rows": [row for row in rows if row["backend"] == "gpu"],
+                "cuda_status": cuda_status(),
+            },
+        )
     return 0
 
 

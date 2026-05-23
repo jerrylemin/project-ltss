@@ -31,6 +31,4 @@ outputs:
   - artifacts/benchmarks.csv
   - artifacts/benchmark_summary.json
 open_questions:
-  - Team member names (use TODO until known)
   - SNAP dataset paths if available locally
-  - GPU model and VRAM if available

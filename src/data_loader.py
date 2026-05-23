@@ -98,7 +98,7 @@ def load_edge_list(path: str | Path) -> Graph:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            parts = stripped.split(",") if edge_path.suffix.lower() == ".csv" else stripped.split()
+            parts = stripped.replace(",", " ").split()
             if len(parts) < 2:
                 continue
             try:

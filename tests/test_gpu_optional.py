@@ -1,10 +1,11 @@
 import numpy as np
 import pytest
 
-cuda = pytest.importorskip("numba.cuda")
+from src.gpu.cuda_utils import cuda_status
 
-if not cuda.is_available():
-    pytest.skip("CUDA is not available; GPU tests skipped cleanly.", allow_module_level=True)
+status = cuda_status()
+if not status["cuda_available"]:
+    pytest.skip(f"CUDA is not available; GPU tests skipped cleanly: {status.get('error')}", allow_module_level=True)
 
 from src.data_loader import make_synthetic_graph
 from src.gpu.pagerank_gpu import run_pagerank_gpu
