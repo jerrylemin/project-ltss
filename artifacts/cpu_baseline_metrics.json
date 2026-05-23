@@ -1,7 +1,7 @@
 {
   "alpha": 0.85,
   "converged": true,
-  "elapsed_seconds": 0.13196079999943322,
+  "elapsed_seconds": 0.10573819999990519,
   "graph_name": "synthetic_small",
   "iterations": 16,
   "l1_delta": 6.046211883552536e-07,

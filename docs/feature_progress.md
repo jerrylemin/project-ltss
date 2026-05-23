@@ -12,6 +12,7 @@
 - SNAP sample runner and dataset setup docs added.
 - Final performance evidence generated for roadNet-CA sample, synthetic_medium, and synthetic_large.
 - V3 pull optimized with device-side reductions and warmup-excluded benchmark timing.
+- Final PDF compliance audit completed in `docs/final_pdf_compliance_audit.md` with overall status PASS WITH WARNINGS.
 
 ## Pending
 

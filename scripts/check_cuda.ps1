@@ -18,13 +18,31 @@ if ($cudaPath) {
     $env:Path = "$cudaPath\bin;$cudaPath\bin\x64;$env:Path"
 }
 
+function Convert-ToAuditSafeText {
+    param([string]$Text)
+    if ($null -eq $Text) { return $Text }
+    $safe = $Text
+    $repoRootEscaped = [Regex]::Escape($repoRoot)
+    $safe = [Regex]::Replace($safe, $repoRootEscaped, "<repo>")
+    if ($env:USERPROFILE) {
+        $safe = [Regex]::Replace($safe, [Regex]::Escape($env:USERPROFILE), "%USERPROFILE%")
+    }
+    if ($env:LOCALAPPDATA) {
+        $safe = [Regex]::Replace($safe, [Regex]::Escape($env:LOCALAPPDATA), "%LOCALAPPDATA%")
+    }
+    if ($env:APPDATA) {
+        $safe = [Regex]::Replace($safe, [Regex]::Escape($env:APPDATA), "%APPDATA%")
+    }
+    return $safe
+}
+
 function Invoke-CheckCommand {
     param([string]$Command)
     try {
         $output = Invoke-Expression $Command 2>&1 | Out-String
-        return @{ command = $Command; exit_code = $LASTEXITCODE; output = $output.Trim() }
+        return @{ command = $Command; exit_code = $LASTEXITCODE; output = (Convert-ToAuditSafeText $output.Trim()) }
     } catch {
-        return @{ command = $Command; exit_code = -1; output = $_.Exception.Message }
+        return @{ command = $Command; exit_code = -1; output = (Convert-ToAuditSafeText $_.Exception.Message) }
     }
 }
 
@@ -40,7 +58,7 @@ $checks = @(
     (Invoke-CheckCommand ".\.venv\Scripts\python.exe -m pip show numba-cuda")
 )
 
-$statusJson = .\.venv\Scripts\python.exe -c "import json; from src.gpu.cuda_utils import cuda_status; print(json.dumps(cuda_status(), indent=2))"
+$statusJson = Convert-ToAuditSafeText (.\.venv\Scripts\python.exe -c "import json; from src.gpu.cuda_utils import cuda_status; print(json.dumps(cuda_status(), indent=2))")
 $payload = [ordered]@{
     timestamp = (Get-Date).ToString("o")
     cuda_path = $env:CUDA_PATH

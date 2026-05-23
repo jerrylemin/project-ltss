@@ -18,14 +18,14 @@ Outputs:
 
 ## Current Results
 
-Warmup is excluded from GPU timings. CPU timings use the NumPy CSR loop. The SNAP row uses a roadNet-CA-derived 200k-edge sample because full roadNet-CA is too large for a fast Python CPU-loop demo.
+Warmup is excluded from GPU timings. Speedup is measured against the project CPU CSR baseline, as required by the proposal baseline. SciPy is used for correctness reference, not as the optimized performance baseline. The SNAP row uses a roadNet-CA-derived 200k-edge sample because full roadNet-CA is too large for a fast Python CPU-loop demo.
 
 | graph_name | nodes | edges | CPU time | GPU V2 time | GPU V3 pull time | best speedup | relative error | note |
 |------------|------:|------:|---------:|------------:|-----------------:|-------------:|---------------:|------|
-| roadNet-CA-sample200k | 72767 | 200000 | 7.697041500001433 | 0.12074580000080459 | 0.01401340000120399 | 549.262955409831 | 6.526240627828615e-16 | SNAP-derived sample |
+| roadNet-CA-sample200k | 72767 | 200000 | 7.373550899999827 | 0.15916629999992438 | 0.01317900000140071 | 559.4924424627166 | 5.073354659556467e-16 | SNAP-derived sample |
 | synthetic_large | 100000 | 500000 | 7.975994500000525 | 0.16064969999933965 | 0.01300710000032268 | 613.2031351955975 | 4.59684568716672e-16 | scale fallback evidence |
 | synthetic_medium | 10000 | 50000 | 0.8015663999995013 | 0.11271289999967848 | 0.006246900000405731 | 128.3142678684532 | 1.624575311515858e-16 | synthetic fallback |
-| synthetic_small | 1000 | 5000 | 0.11504680000143708 | 0.10220639999897685 | 0.005101900000227033 | 22.54979517362503 | 1.0936889414947526e-16 | default demo |
+| synthetic_small | 1000 | 5000 | 0.09265199999936158 | 0.10049830000207294 | 0.0066686999998637475 | 13.893562463636782 | 1.5517643593698782e-16 | default demo |
 
 ## CUDA Status
 
@@ -38,4 +38,4 @@ Warmup is excluded from GPU timings. CPU timings use the NumPy CSR loop. The SNA
 
 ## SNAP Status
 
-SNAP roadNet-CA was downloaded locally as `data/raw/roadNet-CA.txt.gz` and sampled into `data/raw/roadNet-CA.sample200000.txt`; both are ignored by git. The committed evidence uses `artifacts/roadnet_ca_sample_benchmarks.csv`. The runner also supports `--edges-path` for `data/raw/com-youtube.ungraph.txt`, `data/raw/roadNet-CA.txt`, and `data/raw/amazon0601.txt`.
+SNAP roadNet-CA was downloaded locally as `data/raw/roadNet-CA.txt.gz` and sampled into `data/raw/roadNet-CA.sample200000.txt`; both are ignored by git. The committed evidence uses `artifacts/roadnet_ca_sample_benchmarks.csv`. Full com-Youtube and the full 5-graph SNAP benchmark set remain pending and are not claimed as completed. The runner also supports `--edges-path` for `data/raw/com-youtube.ungraph.txt`, `data/raw/roadNet-CA.txt`, and `data/raw/amazon0601.txt`.

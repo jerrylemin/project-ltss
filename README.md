@@ -87,11 +87,11 @@ Artifacts chinh:
 - `artifacts/synthetic_scale_benchmarks.csv`
 - `artifacts/final_performance_summary.json`
 
-CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.13196079999943322s`, rank sum `1.0`.
+CPU baseline synthetic small: 1000 nodes, 5000 edges, 16 iterations, elapsed `0.10573819999990519s`, rank sum `1.0`.
 
 GPU benchmark da chay that tren RTX 3060 Laptop GPU cho `v1`, `v2`, `v3_pull`, `v3_push`. V3 pull la ban nhanh nhat sau toi uu device-side reduction va warmup-excluded timing:
 
-- roadNet-CA-sample200k: CPU `7.697041500001433s`, V3 pull `0.01401340000120399s`, speedup `549.262955409831x`, relative error `6.526240627828615e-16`.
+- roadNet-CA-sample200k: CPU `7.373550899999827s`, V3 pull `0.01317900000140071s`, speedup `559.4924424627166x`, relative error `5.073354659556467e-16`.
 - synthetic_large: CPU `7.975994500000525s`, V3 pull `0.01300710000032268s`, speedup `613.2031351955975x`, relative error `4.59684568716672e-16`.
 
 ## 9. Huong nop bai

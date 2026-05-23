@@ -25,7 +25,7 @@ Measured from `artifacts/cpu_baseline_metrics.json` on synthetic small graph:
 - Nodes: 1000
 - Edges: 5000
 - Iterations: 16
-- Elapsed seconds: 0.13196079999943322
+- Elapsed seconds: 0.10573819999990519
 - Final L1 delta: 6.046211883552536e-07
 - Rank sum: 1.0
 - CPU mode: NumPy CSR loop
@@ -53,17 +53,17 @@ CUDA is usable on the current demo machine after installing CUDA Toolkit 13.2 an
 
 | Graph | CPU time | V3 pull time | Speedup | Relative error |
 |-------|---------:|-------------:|--------:|---------------:|
-| roadNet-CA-sample200k | 7.697041500001433 | 0.01401340000120399 | 549.262955409831x | 6.526240627828615e-16 |
+| roadNet-CA-sample200k | 7.373550899999827 | 0.01317900000140071 | 559.4924424627166x | 5.073354659556467e-16 |
 | synthetic_large | 7.975994500000525 | 0.01300710000032268 | 613.2031351955975x | 4.59684568716672e-16 |
 
 Full roadNet-CA was downloaded locally but not committed. The measured SNAP evidence uses a 200k-edge roadNet-CA sample to keep CPU baseline runtime reasonable for demo.
 
 ## Risk Analysis
 
-- GPU unavailable or CUDA runtime incompatible with Numba.
-- SNAP datasets may be too large for local disk, RAM, or submission workflow.
-- Atomic floating-point precision can affect push-scatter reproducibility.
-- Numba CUDA limitations may require simpler kernels than hand-written CUDA C++.
+- GPU unavailable or CUDA runtime incompatible with Numba. Mitigation: CPU baseline remains fully functional and GPU tests skip cleanly when CUDA is unavailable.
+- SNAP datasets may be too large for local disk, RAM, or submission workflow. Mitigation: benchmark scripts support `--edges-path`, ignored local `data/raw/`, and bounded SNAP samples.
+- Atomic floating-point precision can affect push-scatter reproducibility. Mitigation: CPU and SciPy references verify rank sums and relative errors; pull-gather is treated as the preferred correctness path.
+- Numba CUDA limitations may require simpler kernels than hand-written CUDA C++. Mitigation: V3 documents atomic-reduction fallback and keeps a stable CPU reference for validation.
 
 ## Division of Work
 

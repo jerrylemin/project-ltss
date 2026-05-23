@@ -1,5 +1,5 @@
 backend,version,graph_name,num_nodes,num_edges,iterations,elapsed_seconds,iterations_per_second,speedup_vs_cpu,relative_error_vs_cpu,cuda_available,warmup_excluded,note
-cpu,numpy_loop,roadNet-CA-sample200k,72767,200000,20,7.697041500001433,2.598400957042557,1.0,0.0,True,False,
-gpu,v2,roadNet-CA-sample200k,72767,200000,20,0.12074580000080459,165.63723127319318,63.745832152755156,1.1326482219037141e-16,True,True,warmup excluded
-gpu,v3_pull,roadNet-CA-sample200k,72767,200000,20,0.01401340000120399,1427.205389004928,549.262955409831,6.526240627828615e-16,True,True,warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration.
-gpu,v3_push,roadNet-CA-sample200k,72767,200000,20,0.1756480999993073,113.86402699533257,43.82080705701791,1.1343846394455855e-16,True,True,"warmup excluded; If atomic float support is unavailable on the device, caller should skip this mode."
+cpu,numpy_loop,roadNet-CA-sample200k,72767,200000,20,7.373550899999827,2.7123973606801126,1.0,0.0,True,False,
+gpu,v2,roadNet-CA-sample200k,72767,200000,20,0.15916629999992438,125.65473972825593,46.32608096062628,1.1326482219037141e-16,True,True,warmup excluded
+gpu,v3_pull,roadNet-CA-sample200k,72767,200000,20,0.01317900000140071,1517.565824256342,559.4924424627166,5.073354659556467e-16,True,True,warmup excluded; optimized pull_gather keeps rank vectors on device and copies only reductions per iteration.
+gpu,v3_push,roadNet-CA-sample200k,72767,200000,20,0.13811449999957404,144.80738807338608,53.387232332757016,9.85438130835653e-17,True,True,"warmup excluded; If atomic float support is unavailable on the device, caller should skip this mode."

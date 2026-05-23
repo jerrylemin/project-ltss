@@ -1,0 +1,760 @@
+﻿# Final audit command transcript
+Timestamp: 2026-05-23T13:37:49.4668930+07:00
+
+
+
+===== python --version =====
+
+Python 3.11.9
+
+----- exit_code=0 elapsed_seconds=0.863 -----
+
+
+===== pip list =====
+
+Package                      Version
+
+---------------------------- -----------
+
+altair                       6.0.0
+
+altgraph                     0.17.5
+
+annotated-types              0.7.0
+
+anyio                        4.13.0
+
+APScheduler                  3.10.4
+
+asyncpg                      0.30.0
+
+attrs                        26.1.0
+
+babel                        2.18.0
+
+beautifulsoup4               4.12.3
+
+blinker                      1.9.0
+
+cachetools                   7.0.5
+
+certifi                      2026.2.25
+
+cffi                         2.0.0
+
+charset-normalizer           3.4.7
+
+click                        8.3.2
+
+colorama                     0.4.6
+
+contourpy                    1.3.3
+
+courlan                      1.3.2
+
+cryptography                 48.0.0
+
+cuda-bindings                13.2.0
+
+cuda-core                    1.0.1
+
+cuda-pathfinder              1.5.4
+
+cycler                       0.12.1
+
+datasketch                   1.10.0
+
+dateparser                   1.4.0
+
+fastapi                      0.115.6
+
+fonttools                    4.62.1
+
+gitdb                        4.0.12
+
+GitPython                    3.1.46
+
+google-ai-generativelanguage 0.6.10
+
+google-api-core              2.30.3
+
+google-api-python-client     2.196.0
+
+google-auth                  2.53.0
+
+google-auth-httplib2         0.4.0
+
+google-generativeai          0.8.3
+
+googleapis-common-protos     1.75.0
+
+graphifyy                    0.8.14
+
+greenlet                     3.1.1
+
+grpcio                       1.80.0
+
+grpcio-status                1.71.2
+
+h11                          0.16.0
+
+htmldate                     1.9.4
+
+httpcore                     1.0.9
+
+httplib2                     0.31.2
+
+httptools                    0.7.1
+
+httpx                        0.28.1
+
+idna                         3.11
+
+iniconfig                    2.3.0
+
+Jinja2                       3.1.6
+
+jsonschema                   4.26.0
+
+jsonschema-specifications    2025.9.1
+
+jusText                      3.0.2
+
+kiwisolver                   1.5.0
+
+llvmlite                     0.47.0
+
+lxml                         6.1.1
+
+lxml_html_clean              0.4.5
+
+MarkupSafe                   3.0.3
+
+matplotlib                   3.10.9
+
+narwhals                     2.19.0
+
+networkx                     3.6.1
+
+numba                        0.65.1
+
+numba-cuda                   0.30.2
+
+numpy                        1.26.4
+
+packaging                    26.0
+
+pandas                       3.0.2
+
+pefile                       2023.2.7
+
+pillow                       12.2.0
+
+pip                          26.1.1
+
+playwright                   1.49.1
+
+pluggy                       1.6.0
+
+proto-plus                   1.28.0
+
+protobuf                     5.29.6
+
+psycopg                      3.2.3
+
+psycopg-binary               3.2.3
+
+pyarrow                      23.0.1
+
+pyasn1                       0.6.3
+
+pyasn1_modules               0.4.2
+
+pycparser                    3.0
+
+pydantic                     2.10.4
+
+pydantic_core                2.27.2
+
+pydantic-settings            2.7.0
+
+pydeck                       0.9.1
+
+pyee                         12.0.0
+
+Pygments                     2.20.0
+
+pyinstaller                  6.11.1
+
+pyinstaller-hooks-contrib    2026.5
+
+pyparsing                    3.3.2
+
+pypdf                        6.10.0
+
+pypdfium2                    5.7.1
+
+pytest                       9.0.3
+
+python-dateutil              2.9.0.post0
+
+python-dotenv                1.0.1
+
+pytz                         2026.2
+
+pywin32-ctypes               0.2.3
+
+PyYAML                       6.0.3
+
+RapidFuzz                    3.14.5
+
+referencing                  0.37.0
+
+regex                        2026.5.9
+
+requests                     2.33.1
+
+rpds-py                      0.30.0
+
+scipy                        1.17.1
+
+setuptools                   65.5.0
+
+six                          1.17.0
+
+smmap                        5.0.3
+
+soupsieve                    2.8.3
+
+SQLAlchemy                   2.0.36
+
+starlette                    0.41.3
+
+streamlit                    1.56.0
+
+tenacity                     9.1.4
+
+tld                          0.13.2
+
+toml                         0.10.2
+
+tornado                      6.5.5
+
+tqdm                         4.67.3
+
+trafilatura                  2.0.0
+
+tree-sitter                  0.25.2
+
+tree-sitter-bash             0.25.1
+
+tree-sitter-c                0.24.2
+
+tree-sitter-c-sharp          0.23.5
+
+tree-sitter-cpp              0.23.4
+
+tree-sitter-elixir           0.3.5
+
+tree-sitter-fortran          0.6.0
+
+tree-sitter-go               0.25.0
+
+tree-sitter-groovy           0.1.2
+
+tree-sitter-java             0.23.5
+
+tree-sitter-javascript       0.25.0
+
+tree-sitter-json             0.24.8
+
+tree-sitter-julia            0.23.1
+
+tree-sitter-kotlin           1.1.0
+
+tree-sitter-lua              0.5.0
+
+tree-sitter-objc             3.0.2
+
+tree-sitter-php              0.24.1
+
+tree-sitter-powershell       0.26.4
+
+tree-sitter-python           0.25.0
+
+tree-sitter-ruby             0.23.1
+
+tree-sitter-rust             0.24.2
+
+tree-sitter-scala            0.26.0
+
+tree-sitter-swift            0.7.2
+
+tree-sitter-typescript       0.23.2
+
+tree-sitter-verilog          1.0.3
+
+tree-sitter-zig              1.1.2
+
+typing_extensions            4.15.0
+
+tzdata                       2026.2
+
+tzlocal                      5.3.1
+
+uritemplate                  4.2.0
+
+urllib3                      2.6.3
+
+uvicorn                      0.34.0
+
+watchdog                     6.0.0
+
+watchfiles                   1.2.0
+
+websockets                   16.0
+
+----- exit_code=0 elapsed_seconds=8.142 -----
+
+
+===== git rev-parse HEAD =====
+
+e0081f1315fb77921c602a12ad7c27f2d6d3602c
+
+----- exit_code=0 elapsed_seconds=0.983 -----
+
+
+===== pytest -q =====
+
+..........                                                               [100%]
+
+============================== warnings summary ===============================
+
+tests/test_gpu_optional.py::test_gpu_v1_matches_cpu_when_cuda_available
+
+tests/test_gpu_optional.py::test_gpu_v1_matches_cpu_when_cuda_available
+
+  <repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatcher.py:748: NumbaPerformanceWarning: [1mGrid size 1 will likely result in GPU under-utilization due to low occupancy.[0m
+
+    warn(errors.NumbaPerformanceWarning(msg))
+
+
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+----- exit_code=0 elapsed_seconds=81.423 -----
+
+
+===== pytest tests/ -q =====
+
+..........                                                               [100%]
+
+============================== warnings summary ===============================
+
+tests/test_gpu_optional.py::test_gpu_v1_matches_cpu_when_cuda_available
+
+tests/test_gpu_optional.py::test_gpu_v1_matches_cpu_when_cuda_available
+
+  <repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatcher.py:748: NumbaPerformanceWarning: [1mGrid size 1 will likely result in GPU under-utilization due to low occupancy.[0m
+
+    warn(errors.NumbaPerformanceWarning(msg))
+
+
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+----- exit_code=0 elapsed_seconds=101.68 -----
+
+
+===== python src/cpu_baseline.py =====
+
+{
+
+  "alpha": 0.85,
+
+  "converged": true,
+
+  "elapsed_seconds": 0.1277580999994825,
+
+  "graph_name": "synthetic_small",
+
+  "iterations": 16,
+
+  "l1_delta": 6.046211883552536e-07,
+
+  "l1_error_vs_scipy": 1.43196001931023e-16,
+
+  "max_iter": 200,
+
+  "mode": "numpy_loop",
+
+  "num_edges": 5000,
+
+  "num_nodes": 1000,
+
+  "rank_sum": 1.0,
+
+  "relative_error_vs_scipy": 1.43196001931023e-16,
+
+  "tolerance": 1e-06
+
+}
+
+----- exit_code=0 elapsed_seconds=6.558 -----
+
+
+===== python src/cpu_baseline.py --config project_spec.yaml =====
+
+{
+
+  "alpha": 0.85,
+
+  "converged": true,
+
+  "elapsed_seconds": 0.11867490000076941,
+
+  "graph_name": "synthetic_small",
+
+  "iterations": 16,
+
+  "l1_delta": 6.046211883552536e-07,
+
+  "l1_error_vs_scipy": 1.43196001931023e-16,
+
+  "max_iter": 200,
+
+  "mode": "numpy_loop",
+
+  "num_edges": 5000,
+
+  "num_nodes": 1000,
+
+  "rank_sum": 1.0,
+
+  "relative_error_vs_scipy": 1.43196001931023e-16,
+
+  "tolerance": 1e-06
+
+}
+
+----- exit_code=0 elapsed_seconds=2.061 -----
+
+
+===== python src/profile_cpu.py --config project_spec.yaml =====
+
+----- exit_code=0 elapsed_seconds=1.248 -----
+
+
+===== python src/benchmark.py --config project_spec.yaml =====
+
+----- exit_code=0 elapsed_seconds=49.765 -----
+
+
+===== python src/benchmark.py --config project_spec.yaml --gpu =====
+
+python.exe : <repo>\.venv\Lib\site-packages\numba_cuda\numba
+
+\cuda\dispatcher.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to 
+
+low occupancy.[0m
+
+At line:30 char:79
+
++ ... ml --gpu' { & $py src/benchmark.py --config project_spec.yaml --gpu } ...
+
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (\\100.100.245.9... occupancy.[0m:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 1 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 40 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 40 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+<repo>\.venv\Lib\site-packages\numba_cuda\numba\cuda\dispatc
+
+her.py:748: NumbaPerformanceWarning: [1mGrid size 8 will likely result in GPU under-utilization due to low 
+
+occupancy.[0m
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+----- exit_code=0 elapsed_seconds=79.292 -----
+
+
+===== powershell -ExecutionPolicy Bypass -File scripts/check_cuda.ps1 =====
+
+{
+
+    "timestamp":  "2026-05-23T13:45:11.3660215+07:00",
+
+    "cuda_path":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
+
+    "path_cuda_entries":  [
+
+                              "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin",
+
+                              "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin\\x64"
+
+                          ],
+
+    "checks":  [
+
+                   {
+
+                       "output":  "Sat May 23 13:43:23 2026       \r\n+-----------------------------------------------------------------------------------------+\r\n| NVIDIA-SMI 591.86                 Driver Version: 591.86         CUDA Version: 13.1     |\r\n+-----------------------------------------+------------------------+----------------------+\r\n| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\r\n|                                         |                        |               MIG M. |\r\n|=========================================+========================+======================|\r\n|   0  NVIDIA GeForce RTX 3060 ...  WDDM  |   00000000:01:00.0 Off |                  N/A |\r\n| N/A   54C    P0             28W /  115W |     215MiB /   6144MiB |      0%      Default |\r\n|                                         |                        |                  N/A |\r\n+-----------------------------------------+------------------------+----------------------+\r\n\r\n+-----------------------------------------------------------------------------------------+\r\n| Processes:                                                                              |\r\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\r\n|        ID   ID                                                               Usage      |\r\n|=========================================================================================|\r\n|    0   N/A  N/A             932    C+G   ..._cw5n1h2txyewy\\SearchHost.exe      N/A      |\r\n|    0   N/A  N/A            2660    C+G   ...cord\\app-1.0.9238\\Discord.exe      N/A      |\r\n|    0   N/A  N/A            6532    C+G   ...__2p2nqsd0c76g0\\app\\Codex.exe      N/A      |\r\n|    0   N/A  N/A            9788    C+G   ....0.3967.83\\msedgewebview2.exe      N/A      |\r\n|    0   N/A  N/A           11688    C+G   ...y\\StartMenuExperienceHost.exe      N/A      |\r\n+-----------------------------------------------------------------------------------------+",
+
+                       "command":  "nvidia-smi",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "nvcc: NVIDIA (R) Cuda compiler driver\r\nCopyright (c) 2005-2026 NVIDIA Corporation\r\nBuilt on Thu_Mar_19_22:28:55_Pacific_Daylight_Time_2026\r\nCuda compilation tools, release 13.2, V13.2.78\r\nBuild cuda_13.2.r13.2/compiler.37668154_0",
+
+                       "command":  "nvcc -V",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin\\nvcc.exe",
+
+                       "command":  "where.exe nvcc",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
+
+                       "command":  "cmd /c echo %CUDA_PATH%",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "0.65.1",
+
+                       "command":  ".\\.venv\\Scripts\\python.exe -c \"import numba; print(numba.__version__)\"",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "True\r\n\u003cManaged Device 0\u003e",
+
+                       "command":  ".\\.venv\\Scripts\\python.exe -c \"from numba import cuda; print(cuda.is_available()); print(cuda.gpus)\"",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+
+                       "command":  ".\\.venv\\Scripts\\python.exe -c \"import sys; print(sys.version)\"",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "Name: numba\r\nVersion: 0.65.1\r\nSummary: compiling Python code using LLVM\r\nHome-page: https://numba.pydata.org\r\nAuthor: \r\nAuthor-email: \r\nLicense: BSD\r\nLocation: %USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\r\nRequires: llvmlite, numpy\r\nRequired-by: numba-cuda",
+
+                       "command":  ".\\.venv\\Scripts\\python.exe -m pip show numba",
+
+                       "exit_code":  0
+
+                   },
+
+                   {
+
+                       "output":  "Name: numba-cuda\r\nVersion: 0.30.2\r\nSummary: CUDA target for Numba\r\nHome-page: https://nvidia.github.io/numba-cuda/\r\nAuthor: Anaconda Inc., NVIDIA Corporation\r\nAuthor-email: \r\nLicense-Expression: BSD-2-Clause\r\nLocation: <repo>\\.venv\\Lib\\site-packages\r\nRequires: cuda-bindings, cuda-core, cuda-pathfinder, numba, packaging\r\nRequired-by:",
+
+                       "command":  ".\\.venv\\Scripts\\python.exe -m pip show numba-cuda",
+
+                       "exit_code":  0
+
+                   }
+
+               ],
+
+    "cuda_status":  {
+
+                        "nvidia_smi_found":  true,
+
+                        "nvcc_found":  true,
+
+                        "cuda_path":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
+
+                        "numba_version":  "0.65.1",
+
+                        "numba_cuda_package_found":  true,
+
+                        "numba_cuda_version":  "0.30.2",
+
+                        "cuda_available":  true,
+
+                        "device_name":  "NVIDIA GeForce RTX 3060 Laptop GPU",
+
+                        "error":  null,
+
+                        "nvidia_smi":  "NVIDIA GeForce RTX 3060 Laptop GPU, 6144 MiB, 591.86",
+
+                        "nvcc_version":  "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Thu_Mar_19_22:28:55_Pacific_Daylight_Time_2026\nCuda compilation tools, release 13.2, V13.2.78\nBuild cuda_13.2.r13.2/compiler.37668154_0"
+
+                    }
+
+}
+
+----- exit_code=0 elapsed_seconds=108.668 -----
+
+
+===== python src/benchmark.py --config project_spec.yaml --edges-path data/raw/roadNet-CA.sample200000.txt --graph-name roadNet-CA-sample200k --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/roadnet_ca_sample_benchmarks.csv =====
+
+python.exe : <repo>\.venv\Lib\site-packages\numba_cuda\numba
+
+\cuda\dispatcher.py:748: NumbaPerformanceWarning: [1mGrid size 1 will likely result in GPU under-utilization due to 
+
+low occupancy.[0m
+
+At line:32 char:334
+
++ ... arks.csv' { & $py src/benchmark.py --config project_spec.yaml --edges ...
+
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (\\100.100.245.9... occupancy.[0m:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+  warn(errors.NumbaPerformanceWarning(msg))
+
+----- exit_code=0 elapsed_seconds=93.384 -----
+
+
+===== com-Youtube dataset check =====
+NOT RUN: data/raw/com-youtube.ungraph.txt not present; full com-Youtube remains pending.
+
+
+===== FINAL VERIFY SUMMARY 2026-05-23T14:12:00+07:00 =====
+pytest -q: 10 passed
+pytest tests/ -q: 10 passed
+python src/cpu_baseline.py: exit 0, synthetic_small elapsed 0.10573819999990519s
+python src/cpu_baseline.py --config project_spec.yaml: exit 0, synthetic_small elapsed 0.10283390000040527s
+python src/benchmark.py --config project_spec.yaml: exit 0
+python src/benchmark.py --config project_spec.yaml --gpu: exit 0, default synthetic_small V3 pull 0.0066686999998637475s, speedup 13.893562463636782x
+powershell -ExecutionPolicy Bypass -File scripts/check_cuda.ps1: exit 0, cuda_available true
+Sanitization: personal user/repo paths replaced with placeholders in committed environment artifacts.

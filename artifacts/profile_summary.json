@@ -1,6 +1,6 @@
 {
   "converged": true,
-  "elapsed_seconds": 0.14474519999930635,
+  "elapsed_seconds": 0.1396284000002197,
   "graph_name": "synthetic_small",
   "iterations": 16,
   "l1_delta": 6.046211883552536e-07,
@@ -11,74 +11,74 @@
   "rank_sum": 1.0,
   "top_functions": [
     {
-      "cumulative_time": 0.14476650000000002,
+      "cumulative_time": 0.1396417,
       "function": "pagerank_cpu.py:91:run_pagerank_cpu",
       "primitive_calls": 1,
       "total_calls": 1,
-      "total_time": 2.7700000000000002e-05
+      "total_time": 1.6100000000000002e-05
     },
     {
-      "cumulative_time": 0.1447338,
+      "cumulative_time": 0.1396211,
       "function": "pagerank_cpu.py:9:_pagerank_numpy_loop",
       "primitive_calls": 1,
       "total_calls": 1,
-      "total_time": 0.061321600000000004
+      "total_time": 0.0563243
     },
     {
-      "cumulative_time": 0.0803455,
+      "cumulative_time": 0.0806116,
       "function": "fromnumeric.py:2177:sum",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0175976
+      "total_time": 0.017246300000000003
     },
     {
-      "cumulative_time": 0.059300000000000005,
+      "cumulative_time": 0.0601051,
       "function": "fromnumeric.py:71:_wrapreduction",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0207881
+      "total_time": 0.0204212
     },
     {
-      "cumulative_time": 0.0270248,
+      "cumulative_time": 0.027180600000000003,
       "function": "~:0:<method 'reduce' of 'numpy.ufunc' objects>",
       "primitive_calls": 15937,
       "total_calls": 15937,
-      "total_time": 0.0270248
+      "total_time": 0.027180600000000003
     },
     {
-      "cumulative_time": 0.0098324,
+      "cumulative_time": 0.0107629,
       "function": "fromnumeric.py:72:<dictcomp>",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0098324
+      "total_time": 0.0107629
     },
     {
-      "cumulative_time": 0.0034479000000000003,
+      "cumulative_time": 0.0032602,
       "function": "~:0:<built-in method builtins.isinstance>",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0034479000000000003
+      "total_time": 0.0032602
     },
     {
-      "cumulative_time": 0.0027827000000000004,
+      "cumulative_time": 0.002517,
       "function": "fromnumeric.py:2172:_sum_dispatcher",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0027827000000000004
+      "total_time": 0.002517
     },
     {
-      "cumulative_time": 0.0018306000000000002,
+      "cumulative_time": 0.0018465,
       "function": "~:0:<method 'items' of 'dict' objects>",
       "primitive_calls": 15888,
       "total_calls": 15888,
-      "total_time": 0.0018306000000000002
+      "total_time": 0.0018465
     },
     {
-      "cumulative_time": 0.00027150000000000004,
+      "cumulative_time": 0.0001588,
       "function": "~:0:<method 'sum' of 'numpy.ndarray' objects>",
       "primitive_calls": 49,
       "total_calls": 49,
-      "total_time": 5.9600000000000005e-05
+      "total_time": 3.12e-05
     }
   ]
 }

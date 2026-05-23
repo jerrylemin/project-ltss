@@ -16,3 +16,4 @@
 - [x] GPU code ton tai va skip sach khi khong co CUDA
 - [x] GPU smoke test pass khi CUDA kha dung
 - [x] docs/cuda_setup.md va docs/dataset_setup.md ton tai
+- [x] docs/final_pdf_compliance_audit.md ton tai
