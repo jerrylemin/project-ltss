@@ -17,3 +17,20 @@ graphify-out/
 !artifacts/.gitkeep
 !artifacts/*.json
 !artifacts/*.csv
+
+# AI agent local context and tooling
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.codex/
+.claude/
+.cursor/
+.continue/
+.windsurf/
+.aider*
+docs/codex_context.md
+docs/project_structure.md
+docs/session_handoff.md
+docs/setup_and_run.md
+docs/feature_progress.md
+docs/open_questions.md
