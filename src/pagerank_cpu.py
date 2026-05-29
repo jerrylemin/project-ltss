@@ -13,39 +13,43 @@ def _pagerank_numpy_loop(
     alpha: float,
     tol: float,
     max_iter: int,
-) -> tuple[np.ndarray, int, float, bool]:
+) -> tuple[np.ndarray, int, float, bool, list[float], list[float]]:
     n = len(out_degree)
     if n == 0:
-        return np.array([], dtype=np.float64), 0, 0.0, True
+        return np.array([], dtype=np.float64), 0, 0.0, True, [], []
 
     rank = np.full(n, 1.0 / n, dtype=np.float64)
     base = (1.0 - alpha) / n
     l1_delta = float("inf")
     converged = False
+    spmv_times: list[float] = []
+    iteration_wall_times: list[float] = []
 
     for iteration in range(1, max_iter + 1):
+        iteration_start = perf_counter()
         dangling_mass = float(rank[out_degree == 0].sum())
         new_rank = np.empty_like(rank)
         dangling_term = alpha * dangling_mass / n
-        for node in range(n):
-            start = indptr[node]
-            end = indptr[node + 1]
-            incoming = indices[start:end]
-            if incoming.size:
-                contribution = np.sum(rank[incoming] / out_degree[incoming])
-            else:
-                contribution = 0.0
-            new_rank[node] = base + dangling_term + alpha * contribution
+        spmv_start = perf_counter()
+        edge_contrib = rank[indices] / out_degree[indices]
+        nonempty = np.diff(indptr) > 0
+        new_rank.fill(0.0)
+        if edge_contrib.size:
+            new_rank[nonempty] = np.add.reduceat(edge_contrib, indptr[:-1][nonempty])
+        spmv_times.append(perf_counter() - spmv_start)
+
+        new_rank = base + dangling_term + alpha * new_rank
 
         total = float(new_rank.sum())
         if total > 0:
             new_rank /= total
         l1_delta = float(np.abs(new_rank - rank).sum())
         rank = new_rank
+        iteration_wall_times.append(perf_counter() - iteration_start)
         if l1_delta < tol:
             converged = True
             break
-    return rank, iteration, l1_delta, converged
+    return rank, iteration, l1_delta, converged, spmv_times, iteration_wall_times
 
 
 def _pagerank_scipy_reference(
@@ -96,17 +100,19 @@ def run_pagerank_cpu(
     mode: str = "numpy_loop",
     verify_scipy: bool = True,
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    indptr = np.asarray(graph["indptr"], dtype=np.int64)
-    indices = np.asarray(graph["indices"], dtype=np.int64)
-    out_degree = np.asarray(graph["out_degree"], dtype=np.int64)
+    indptr = np.asarray(graph["indptr"])
+    indices = np.asarray(graph["indices"])
+    out_degree = np.asarray(graph["out_degree"])
 
     start = perf_counter()
+    spmv_times: list[float] = []
+    iteration_wall_times: list[float] = []
     if mode == "scipy":
         rank, iterations, l1_delta, converged = _pagerank_scipy_reference(
             indptr, indices, out_degree, alpha, tol, max_iter
         )
     elif mode == "numpy_loop":
-        rank, iterations, l1_delta, converged = _pagerank_numpy_loop(
+        rank, iterations, l1_delta, converged, spmv_times, iteration_wall_times = _pagerank_numpy_loop(
             indptr, indices, out_degree, alpha, tol, max_iter
         )
     else:
@@ -123,6 +129,11 @@ def run_pagerank_cpu(
         "converged": bool(converged),
         "mode": mode,
     }
+    if spmv_times:
+        metrics["spmv_times_seconds"] = [float(value) for value in spmv_times]
+        metrics["spmv_avg_seconds"] = float(np.mean(spmv_times))
+        metrics["spmv_total_seconds"] = float(np.sum(spmv_times))
+        metrics["per_iteration_wall_time_seconds"] = float(np.mean(iteration_wall_times))
 
     if verify_scipy and mode != "scipy":
         try:

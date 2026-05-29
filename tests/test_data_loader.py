@@ -25,6 +25,17 @@ def test_synthetic_toy_graph_is_valid():
     assert graph["num_nodes"] == 4
     assert graph["num_edges"] > 0
     assert len(graph["indptr"]) == graph["num_nodes"] + 1
+    assert len(graph["indptr_out"]) == graph["num_nodes"] + 1
+    assert len(graph["indices_out"]) == graph["num_edges"]
+
+
+def test_outgoing_csr_rows_are_source_adjacency():
+    graph = make_synthetic_graph("toy")
+    indptr_out = graph["indptr_out"]
+    indices_out = graph["indices_out"]
+    assert indices_out[indptr_out[0] : indptr_out[1]].tolist() == [1, 2]
+    assert indices_out[indptr_out[1] : indptr_out[2]].tolist() == [2]
+    assert indices_out[indptr_out[2] : indptr_out[3]].tolist() == [0, 3]
 
 
 def test_fixture_snap_sample_loads():

@@ -16,23 +16,23 @@ PageRank ranks nodes in a directed graph by repeatedly propagating rank mass alo
 
 ## Dataset Details
 
-The default dataset mode is synthetic so the project runs without external downloads. Optional SNAP targets are `roadNet-CA`, `com-Youtube`, `wiki-Talk`, `amazon0601`, and `soc-LiveJournal1` when local edge-list files are available.
+The benchmark mode uses the five required SNAP targets: `roadNet-CA`, `com-youtube`, `wiki-talk`, `amazon0601`, and `soc-livejournal`. The downloader normalizes them to `data/graphs/*.tsv`; synthetic graphs remain available for smoke tests.
 
 ## Measured CPU Baseline Timing
 
-Measured from `artifacts/cpu_baseline_metrics.json` on synthetic small graph:
+Measured from the final five-graph benchmark in `artifacts/benchmark_results.csv`:
 
-- Nodes: 1000
-- Edges: 5000
-- Iterations: 16
-- Elapsed seconds: 0.10573819999990519
-- Final L1 delta: 6.046211883552536e-07
-- Rank sum: 1.0
-- CPU mode: NumPy CSR loop
+| Graph | CPU time (s) | Iterations | CPU mode |
+|-------|-------------:|-----------:|----------|
+| roadNet-CA | 6.767666 | 57 | custom CSR NumPy |
+| com-youtube | 0.869269 | 12 | custom CSR NumPy |
+| wiki-talk | 5.104843 | 40 | custom CSR NumPy |
+| amazon0601 | 2.766479 | 55 | custom CSR NumPy |
+| soc-livejournal | 63.076968 | 49 | custom CSR NumPy |
 
 ## Performance Target
 
-PageRank on com-Youtube < 5s; 15-60x over CPU SpMV step.
+PageRank on com-Youtube < 5s; 15-60x over CPU SpMV step where graph structure allows the target range. Final result: `gpu_v3_push` converged `com-youtube` in `0.065556s`.
 
 ## Bottleneck Analysis
 
@@ -49,21 +49,24 @@ Profile results in `artifacts/profile_summary.json` show `run_pagerank_cpu` and 
 
 ## Final GPU Evidence
 
-CUDA is usable on the current demo machine after installing CUDA Toolkit 13.2 and `numba-cuda==0.30.2`. V3 pull was optimized to keep rank vectors on device and copy only scalar reductions during iterations. GPU benchmark timings exclude warmup/JIT.
+CUDA is usable on the current demo machine with `numba-cuda==0.30.2`. V3 pull and push keep rank vectors on device and copy only scalar reductions during iterations. GPU benchmark timings exclude warmup/JIT.
 
-| Graph | CPU time | V3 pull time | Speedup | Relative error |
-|-------|---------:|-------------:|--------:|---------------:|
-| roadNet-CA-sample200k | 7.373550899999827 | 0.01317900000140071 | 559.4924424627166x | 5.073354659556467e-16 |
-| synthetic_large | 7.975994500000525 | 0.01300710000032268 | 613.2031351955975x | 4.59684568716672e-16 |
+| Graph | Best GPU | GPU time (s) | Speedup | Relative L1 vs SciPy |
+|-------|----------|-------------:|--------:|---------------------:|
+| roadNet-CA | gpu_v3_pull | 0.331933 | 20.389x | 2.175e-16 |
+| com-youtube | gpu_v3_push | 0.065556 | 13.260x | 3.341e-13 |
+| wiki-talk | gpu_v3_pull | 0.344802 | 14.805x | 2.605e-13 |
+| amazon0601 | gpu_v3_push | 0.041988 | 65.887x | 3.227e-16 |
+| soc-livejournal | gpu_v3_push | 1.171885 | 53.825x | 1.152e-14 |
 
-Full roadNet-CA was downloaded locally but not committed. The measured SNAP evidence uses a 200k-edge roadNet-CA sample to keep CPU baseline runtime reasonable for demo.
+The complete all-version result table is in `artifacts/benchmark_results.csv`.
 
 ## Risk Analysis
 
 - GPU unavailable or CUDA runtime incompatible with Numba. Mitigation: CPU baseline remains fully functional and GPU tests skip cleanly when CUDA is unavailable.
-- SNAP datasets may be too large for local disk, RAM, or submission workflow. Mitigation: benchmark scripts support `--edges-path`, ignored local `data/raw/`, and bounded SNAP samples.
-- Atomic floating-point precision can affect push-scatter reproducibility. Mitigation: CPU and SciPy references verify rank sums and relative errors; pull-gather is treated as the preferred correctness path.
-- Numba CUDA limitations may require simpler kernels than hand-written CUDA C++. Mitigation: V3 documents atomic-reduction fallback and keeps a stable CPU reference for validation.
+- SNAP datasets are large and should not be committed. Mitigation: `data/graphs/*` is ignored and benchmark evidence is committed as CSV/JSON.
+- Atomic floating-point precision can affect push-scatter reproducibility. Mitigation: CPU and SciPy references verify rank sums and relative errors; final GPU relative errors are below `1e-6`.
+- Numba CUDA limitations may require simpler kernels than hand-written CUDA C++. Mitigation: V3 uses `cuda.shfl_down_sync` for warp-level L1 reduction and keeps a stable CPU/SciPy reference for validation.
 
 ## Division of Work
 

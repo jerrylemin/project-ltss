@@ -10,6 +10,77 @@ import numpy as np
 Graph = dict[str, object]
 
 
+def _empty_graph(n: int, name: str) -> Graph:
+    indptr = np.zeros(n + 1, dtype=np.int64)
+    indices = np.array([], dtype=np.int32)
+    out_degree = np.zeros(n, dtype=np.int32)
+    return {
+        "indptr": indptr,
+        "indices": indices,
+        "indptr_in": indptr,
+        "indices_in": indices,
+        "indptr_out": indptr.copy(),
+        "indices_out": indices.copy(),
+        "out_degree": out_degree,
+        "num_nodes": n,
+        "num_edges": 0,
+        "name": name,
+    }
+
+
+def _graph_from_arrays(src: np.ndarray, dst: np.ndarray, *, num_nodes: int | None = None, name: str = "graph") -> Graph:
+    src = np.asarray(src, dtype=np.int32)
+    dst = np.asarray(dst, dtype=np.int32)
+    if src.size == 0:
+        return _empty_graph(int(num_nodes or 0), name)
+
+    valid_self = src != dst
+    skipped_self_loops = int(src.size - np.count_nonzero(valid_self))
+    if skipped_self_loops:
+        warnings.warn(
+            f"Skipped {skipped_self_loops} self-loop(s); PageRank correctness is computed without them.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        src = src[valid_self]
+        dst = dst[valid_self]
+    if src.size == 0:
+        return _empty_graph(int(num_nodes or 0), name)
+
+    n = int(num_nodes) if num_nodes is not None else int(max(int(src.max()), int(dst.max())) + 1)
+    valid = (src >= 0) & (src < n) & (dst >= 0) & (dst < n)
+    if not np.all(valid):
+        raise ValueError("Edge list contains node ids outside the declared node range")
+
+    order = np.lexsort((src, dst))
+    src_sorted = src[order].astype(np.int32, copy=False)
+    dst_sorted = dst[order].astype(np.int32, copy=False)
+    counts = np.bincount(dst_sorted, minlength=n).astype(np.int64)
+    indptr = np.zeros(n + 1, dtype=np.int64)
+    indptr[1:] = np.cumsum(counts)
+
+    out_order = np.lexsort((dst, src))
+    src_out_sorted = src[out_order].astype(np.int32, copy=False)
+    dst_out_sorted = dst[out_order].astype(np.int32, copy=False)
+    out_counts = np.bincount(src_out_sorted, minlength=n).astype(np.int64)
+    indptr_out = np.zeros(n + 1, dtype=np.int64)
+    indptr_out[1:] = np.cumsum(out_counts)
+    out_degree = np.bincount(src, minlength=n).astype(np.int32)
+
+    return {
+        "indptr": indptr,
+        "indices": src_sorted,
+        "indptr_in": indptr,
+        "indices_in": src_sorted,
+        "indptr_out": indptr_out,
+        "indices_out": dst_out_sorted,
+        "out_degree": out_degree,
+        "num_nodes": int(n),
+        "num_edges": int(len(src_sorted)),
+        "name": name,
+    }
+
+
 def _graph_from_edges(
     edges: Iterable[tuple[int, int]],
     *,
@@ -20,14 +91,7 @@ def _graph_from_edges(
     raw_edges = list(edges)
     if not raw_edges:
         n = int(num_nodes or 0)
-        return {
-            "indptr": np.zeros(n + 1, dtype=np.int64),
-            "indices": np.array([], dtype=np.int64),
-            "out_degree": np.zeros(n, dtype=np.int64),
-            "num_nodes": n,
-            "num_edges": 0,
-            "name": name,
-        }
+        return _empty_graph(n, name)
 
     filtered: list[tuple[int, int]] = []
     skipped_self_loops = 0
@@ -57,41 +121,21 @@ def _graph_from_edges(
         mapped_edges = filtered
 
     if not mapped_edges:
-        return {
-            "indptr": np.zeros(n + 1, dtype=np.int64),
-            "indices": np.array([], dtype=np.int64),
-            "out_degree": np.zeros(n, dtype=np.int64),
-            "num_nodes": n,
-            "num_edges": 0,
-            "name": name,
-        }
+        return _empty_graph(n, name)
 
-    src = np.asarray([edge[0] for edge in mapped_edges], dtype=np.int64)
-    dst = np.asarray([edge[1] for edge in mapped_edges], dtype=np.int64)
-    valid = (src >= 0) & (src < n) & (dst >= 0) & (dst < n)
-    if not np.all(valid):
-        raise ValueError("Edge list contains node ids outside the declared node range")
-
-    order = np.lexsort((src, dst))
-    src_sorted = src[order]
-    dst_sorted = dst[order]
-    counts = np.bincount(dst_sorted, minlength=n).astype(np.int64)
-    indptr = np.zeros(n + 1, dtype=np.int64)
-    indptr[1:] = np.cumsum(counts)
-    out_degree = np.bincount(src, minlength=n).astype(np.int64)
-
-    return {
-        "indptr": indptr,
-        "indices": src_sorted.astype(np.int64, copy=False),
-        "out_degree": out_degree,
-        "num_nodes": int(n),
-        "num_edges": int(len(src_sorted)),
-        "name": name,
-    }
+    src = np.asarray([edge[0] for edge in mapped_edges], dtype=np.int32)
+    dst = np.asarray([edge[1] for edge in mapped_edges], dtype=np.int32)
+    return _graph_from_arrays(src, dst, num_nodes=n, name=name)
 
 
-def load_edge_list(path: str | Path) -> Graph:
+def load_edge_list(path: str | Path, *, remap: bool = True) -> Graph:
     edge_path = Path(path)
+    if not remap:
+        edges = np.loadtxt(edge_path, dtype=np.int32, comments="#", ndmin=2, usecols=(0, 1))
+        if edges.size == 0:
+            return _empty_graph(0, edge_path.stem)
+        return _graph_from_arrays(edges[:, 0], edges[:, 1], name=edge_path.stem)
+
     edges: list[tuple[int, int]] = []
     with edge_path.open("r", encoding="utf-8") as fh:
         for line_number, line in enumerate(fh, start=1):

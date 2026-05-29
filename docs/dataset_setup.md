@@ -1,14 +1,16 @@
 # SNAP Dataset Setup
 
-The project runs by default on synthetic graphs. Real SNAP datasets are optional for larger demos.
+The project now benchmarks the five required real SNAP graphs by default. Synthetic graphs remain available for smoke tests.
 
 ## Supported Local Filenames
 
-Place decompressed edge-list files under `data/raw/`:
+The required normalized files live under `data/graphs/`:
 
-- `data/raw/com-youtube.ungraph.txt`
-- `data/raw/roadNet-CA.txt`
-- `data/raw/amazon0601.txt`
+- `data/graphs/roadNet-CA.tsv`
+- `data/graphs/com-youtube.tsv`
+- `data/graphs/wiki-talk.tsv`
+- `data/graphs/amazon0601.tsv`
+- `data/graphs/soc-livejournal.tsv`
 
 The loader accepts blank lines, comment lines starting with `#`, whitespace-separated files, and CSV-style comma-separated edge lists.
 
@@ -17,8 +19,16 @@ The loader accepts blank lines, comment lines starting with `#`, whitespace-sepa
 - com-Youtube: https://snap.stanford.edu/data/com-Youtube.html
 - roadNet-CA: https://snap.stanford.edu/data/roadNet-CA.html
 - amazon0601: https://snap.stanford.edu/data/amazon0601.html
+- wiki-Talk: https://snap.stanford.edu/data/wiki-Talk.html
+- soc-LiveJournal1: https://snap.stanford.edu/data/soc-LiveJournal1.html
 
 ## Helper Script
+
+Download and normalize all five required SNAP graphs to TSV files under `data/graphs/`:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/download_graphs.py
+```
 
 Create a tiny local sample:
 
@@ -46,4 +56,4 @@ powershell -ExecutionPolicy Bypass -File scripts/download_snap_sample.ps1 -Graph
 .\.venv\Scripts\python.exe src/benchmark.py --config project_spec.yaml --edges-path data/raw/roadNet-CA.sample200000.txt --graph-name roadNet-CA-sample200k --gpu --versions v2,v3_pull,v3_push --max-iter 20 --no-scipy-verify --output artifacts/roadnet_ca_sample_benchmarks.csv
 ```
 
-The script does not download large datasets unless `-Download` is provided.
+The legacy sample script does not download large datasets unless `-Download` is provided. The required final benchmark uses `scripts/download_graphs.py`.

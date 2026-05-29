@@ -1,29 +1,131 @@
 import numpy as np
 import pytest
+import scipy.sparse as sp
+from numba import cuda
 
-from src.data_loader import make_synthetic_graph
-from src.metrics import relative_l1_error
+from src.data_loader import _graph_from_edges, make_synthetic_graph as _make_project_synthetic_graph
+from src.gpu.pagerank_gpu import run_pagerank_gpu
 from src.pagerank_cpu import run_pagerank_cpu
 
 
-def test_rank_sum_and_non_negative_values():
-    graph = make_synthetic_graph("toy")
-    rank, metrics = run_pagerank_cpu(graph)
-    assert 0.9999 <= metrics["rank_sum"] <= 1.0001
-    assert np.all(rank >= 0)
+TOL = 1e-6
 
 
-def test_cpu_vs_scipy_relative_error():
-    pytest.importorskip("scipy")
-    graph = make_synthetic_graph("toy")
-    rank, _ = run_pagerank_cpu(graph, mode="numpy_loop")
-    ref_rank, _ = run_pagerank_cpu(graph, mode="scipy", verify_scipy=False)
-    assert relative_l1_error(rank, ref_rank) < 1e-5
+def make_synthetic_graph(n=200, seed=42):
+    """Random directed graph: returns the project graph dict with incoming/outgoing CSR."""
+    return _make_project_synthetic_graph("random", num_nodes=n, num_edges=n * 5, seed=seed, name="test_synthetic")
 
 
-def test_toy_graph_deterministic_across_runs():
-    graph1 = make_synthetic_graph("toy")
-    graph2 = make_synthetic_graph("toy")
-    rank1, _ = run_pagerank_cpu(graph1)
-    rank2, _ = run_pagerank_cpu(graph2)
-    np.testing.assert_allclose(rank1, rank2)
+def make_dangling_graph():
+    """Graph where node 0 has zero out-edges (dangling node)."""
+    edges = [(1, 0), (2, 0), (2, 1)]
+    return _graph_from_edges(edges, num_nodes=3, name="dangling", remap=False)
+
+
+def scipy_pagerank(graph, alpha=0.85, tol=TOL, max_iter=200):
+    """SciPy sparse reference -- ground truth."""
+    indptr_in = np.asarray(graph["indptr"], dtype=np.int64)
+    indices_in = np.asarray(graph["indices"], dtype=np.int64)
+    out_degree = np.asarray(graph["out_degree"], dtype=np.int64)
+    n = int(graph["num_nodes"])
+    if n == 0:
+        return np.array([], dtype=np.float64)
+
+    data = 1.0 / np.maximum(out_degree[indices_in], 1).astype(np.float64)
+    matrix = sp.csr_matrix((data, indices_in, indptr_in), shape=(n, n))
+    rank = np.full(n, 1.0 / n, dtype=np.float64)
+    base = (1.0 - alpha) / n
+
+    for _ in range(max_iter):
+        dangling_mass = float(rank[out_degree == 0].sum())
+        new_rank = base + alpha * (matrix @ rank + dangling_mass / n)
+        total = float(new_rank.sum())
+        if total > 0:
+            new_rank /= total
+        if float(np.abs(new_rank - rank).sum()) < tol:
+            return np.asarray(new_rank, dtype=np.float64)
+        rank = np.asarray(new_rank, dtype=np.float64)
+    return rank
+
+
+def numpy_pagerank(graph, tol=TOL):
+    rank, _metrics = run_pagerank_cpu(graph, tol=tol, mode="numpy_loop", verify_scipy=False)
+    return rank
+
+
+def gpu_v1_pagerank(graph, tol=TOL):
+    rank, _metrics = run_pagerank_gpu(graph, tol=tol, version="v1")
+    return rank
+
+
+def gpu_v2_pagerank(graph, tol=TOL):
+    rank, _metrics = run_pagerank_gpu(graph, tol=tol, version="v2")
+    return rank
+
+
+def gpu_v3_pagerank(graph, mode="pull", tol=TOL):
+    version = "v3_pull" if mode == "pull" else "v3_push"
+    rank, _metrics = run_pagerank_gpu(graph, tol=tol, version=version)
+    return rank
+
+
+def relative_l1_error(actual, expected):
+    return np.sum(np.abs(actual - expected)) / np.sum(np.abs(expected))
+
+
+def test_cpu_vs_scipy_synthetic():
+    """CPU NumPy CSR must match SciPy within 1e-6 L1 relative error."""
+    graph = make_synthetic_graph()
+    r_cpu = numpy_pagerank(graph, tol=TOL)
+    r_scipy = scipy_pagerank(graph, tol=TOL)
+    rel_err = relative_l1_error(r_cpu, r_scipy)
+    assert rel_err < TOL, f"CPU vs SciPy L1 relative error {rel_err:.2e} >= 1e-6"
+
+
+def test_cpu_dangling_node():
+    """CPU must handle dangling nodes (zero out-degree) without NaN/Inf."""
+    graph = make_dangling_graph()
+    r = numpy_pagerank(graph, tol=TOL)
+    assert not np.any(np.isnan(r)), "NaN in rank vector with dangling node"
+    assert not np.any(np.isinf(r)), "Inf in rank vector with dangling node"
+    assert abs(np.sum(r) - 1.0) < 1e-5, "Rank vector does not sum to 1"
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+def test_gpu_v1_vs_scipy():
+    """GPU V1 output must match SciPy within 1e-6 L1 relative error."""
+    graph = make_synthetic_graph()
+    r_v1 = gpu_v1_pagerank(graph, tol=TOL)
+    r_scipy = scipy_pagerank(graph, tol=TOL)
+    rel_err = relative_l1_error(r_v1, r_scipy)
+    assert rel_err < TOL, f"V1 vs SciPy error {rel_err:.2e} >= 1e-6"
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+def test_gpu_v2_vs_v1():
+    """GPU V2 must produce identical output to V1 within 1e-6."""
+    graph = make_synthetic_graph()
+    r_v1 = gpu_v1_pagerank(graph, tol=TOL)
+    r_v2 = gpu_v2_pagerank(graph, tol=TOL)
+    rel_err = relative_l1_error(r_v2, r_v1)
+    assert rel_err < TOL, f"V2 vs V1 error {rel_err:.2e} >= 1e-6"
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+def test_gpu_v3_push_vs_pull():
+    """V3 push and pull must produce identical output within 1e-6."""
+    graph = make_synthetic_graph()
+    r_pull = gpu_v3_pagerank(graph, mode="pull", tol=TOL)
+    r_push = gpu_v3_pagerank(graph, mode="push", tol=TOL)
+    rel_err = relative_l1_error(r_push, r_pull)
+    assert rel_err < TOL, f"V3 push vs pull error {rel_err:.2e} >= 1e-6"
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+@pytest.mark.parametrize("mode", ["pull", "push"])
+def test_gpu_v3_vs_scipy(mode):
+    graph = make_synthetic_graph()
+    r_v3 = gpu_v3_pagerank(graph, mode=mode, tol=TOL)
+    r_scipy = scipy_pagerank(graph, tol=TOL)
+    rel_err = relative_l1_error(r_v3, r_scipy)
+    assert rel_err < TOL, f"V3-{mode} vs SciPy error {rel_err:.2e} >= 1e-6"

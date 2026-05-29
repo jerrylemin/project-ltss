@@ -18,6 +18,11 @@ from src.pagerank_cpu import run_pagerank_cpu
 def build_graph(args: argparse.Namespace, config: dict[str, Any]) -> dict[str, Any]:
     if args.edges:
         return load_edge_list(args.edges)
+    graph_path = Path(args.graph)
+    if graph_path.exists():
+        return load_edge_list(graph_path, remap=False)
+    if graph_path.suffix or "/" in args.graph or "\\" in args.graph:
+        raise FileNotFoundError(f"Graph path does not exist: {graph_path}")
     if args.graph in {"toy", "chain", "star", "random", "power_law"}:
         return make_synthetic_graph(args.graph)
     return load_graph_from_config(config, graph_size=args.graph)
@@ -41,6 +46,11 @@ def main(argv: list[str] | None = None) -> int:
 
     output_path = Path("artifacts/cpu_baseline_metrics.json")
     write_json(output_path, metrics)
+    if "spmv_avg_seconds" in metrics:
+        print(f"SpMV avg per-iteration: {metrics['spmv_avg_seconds'] * 1000:.2f} ms")
+        print(f"SpMV total (all iters): {metrics['spmv_total_seconds'] * 1000:.2f} ms")
+        print(f"Iterations to converge: {metrics['iterations']}")
+        print(f"Per-iteration wall time: {metrics['per_iteration_wall_time_seconds'] * 1000:.2f} ms")
     print(json.dumps(metrics, indent=2, sort_keys=True))
     return 0
 
