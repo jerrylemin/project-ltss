@@ -1,0 +1,2 @@
+graph_name,version,n_nodes,n_edges,convergence_time_s,iterations,iter_per_sec,cpu_spmv_total_s,version_time_over_cpu,speedup_vs_cpu,relative_l1_vs_scipy,spearman_vs_scipy,target_under_5s,cuda_available,note
+synthetic_small,cpu_numpy,1000,5000,0.001584599998750491,16,10097.185417529045,0.0011635999981081113,1.0,1.0,1.0744443529331349e-16,1.0,False,True,

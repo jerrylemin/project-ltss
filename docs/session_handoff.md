@@ -1,97 +1,103 @@
-# Session Handoff
+﻿# Session Handoff
 
-Last updated: 2026-05-29T14:03:47.2264538+07:00
+Last updated: 2026-05-29T18:31:00+07:00
 
 ## Environment Used
 
-- Workspace: `D:\project-ltss`
-- Python executable: `D:\project-ltss\.venv\Scripts\python.exe`
-- Python: `3.11.9`
-- Packages: `numpy==2.4.6`, `scipy==1.17.1`, `numba==0.65.1`, `numba-cuda==0.30.2`
-- GPU: NVIDIA GeForce RTX 3060 Laptop GPU, driver `591.86`, 6144 MiB VRAM
+- Workspace: `C:\Users\Administrator\Documents\MEGA\project-ltss`
+- Python executable: `.venv\Scripts\python.exe`
+- Python: `3.12.6`
+- Packages: `numpy==2.4.6`, `scipy==1.17.1`, `numba==0.65.1`, `numba-cuda==0.30.2`, `fastapi==0.136.3`, `uvicorn==0.40.0`
+- GPU: NVIDIA GeForce RTX 3060
 - CUDA availability: `cuda.is_available() == True`
+- Workflow: Codex-only. No Claude Code, no `.claude`, no Claude slash commands or hooks.
 
 ## Dataset Files Present
 
 | File | Size GB | Notes |
 |------|--------:|-------|
 | `data/graphs/roadNet-CA.tsv` | 0.077 | real SNAP graph |
-| `data/graphs/com-youtube.tsv` | 0.036 | real SNAP graph, fallback URL supported by downloader |
+| `data/graphs/com-youtube.tsv` | 0.036 | real SNAP graph, fallback URL used |
 | `data/graphs/wiki-talk.tsv` | 0.057 | real SNAP graph |
 | `data/graphs/amazon0601.tsv` | 0.041 | real SNAP graph |
-| `data/graphs/soc-livejournal.tsv` | 0.942 | real SNAP graph |
+| `data/graphs/soc-livejournal.tsv` | 0.942 | real SNAP graph; loader skips 518,382 self-loops |
 
 Downloaded graph TSVs are ignored by git; benchmark evidence is committed under `artifacts/`.
 
-## Commands Run
+## Commands Run This Session
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\download_graphs.py
-.\.venv\Scripts\python.exe -m py_compile src\data_loader.py src\pagerank_cpu.py src\cpu_baseline.py src\benchmark.py src\gpu\pagerank_v1.py src\gpu\pagerank_v2.py src\gpu\pagerank_v3.py scripts\download_graphs.py
+Get-Content C:\Users\Administrator\.codex\AGENTS.md
+Get-Content C:\Users\Administrator\.codex\config.toml
+graphify update .
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m py_compile src/config.py src/data_loader.py src/pagerank_cpu.py src/cpu_baseline.py src/benchmark.py src/metrics.py src/profile_cpu.py src/run_pipeline.py src/gpu/cuda_utils.py src/gpu/pagerank_gpu.py src/gpu/pagerank_v1.py src/gpu/pagerank_v2.py src/gpu/pagerank_v3.py src/ui/dashboard_server.py scripts/download_graphs.py scripts/run_dashboard.py
 .\.venv\Scripts\python.exe -m pytest tests/ -v
+.\.venv\Scripts\python.exe src\cpu_baseline.py --graph toy
+.\.venv\Scripts\python.exe src\cpu_baseline.py --graph small
+.\.venv\Scripts\python.exe src\benchmark.py --synthetic --sizes small --versions cpu_numpy --output artifacts\synthetic_smoke_benchmark.csv
+.\.venv\Scripts\python.exe scripts\download_graphs.py
 .\.venv\Scripts\python.exe src\cpu_baseline.py --graph data\graphs\roadNet-CA.tsv
 .\.venv\Scripts\python.exe src\benchmark.py
-Select-String -Path artifacts\benchmark_results.csv -Pattern "com-youtube"
-Select-String -Path src\gpu\*.py -Pattern "shfl_down_sync"
-Select-String -Path src\gpu\pagerank_v1.py -Pattern "copy_to_host|to_device"
+.\.venv\Scripts\python.exe scripts\run_dashboard.py --port 8000
 ```
 
-## Exact Benchmark Results
+## Verification Results
 
-`python src\benchmark.py` completed successfully on the five required SNAP graphs and wrote `artifacts/benchmark_results.csv`.
+| Command | Exit code | Result |
+|---------|----------:|--------|
+| `python -m py_compile ...` | 0 | PASS |
+| `python -m pytest tests/ -v` | 0 | PASS, 21 passed, 23 warnings |
+| `python src/cpu_baseline.py --graph toy` | 0 | PASS, converged in 17 iterations |
+| `python src/cpu_baseline.py --graph small` | 0 | PASS, converged in 16 iterations |
+| `python src/cpu_baseline.py --graph data/graphs/roadNet-CA.tsv` | 0 | PASS, 57 iterations, rel L1 vs SciPy `2.107e-16` |
+| `python src/benchmark.py --synthetic --sizes small --versions cpu_numpy --output artifacts/synthetic_smoke_benchmark.csv` | 0 | PASS |
+| `python src/benchmark.py` | 0 | PASS, 25 rows, target met |
+| dashboard endpoint smoke test | 0 | PASS, `/`, `/api/benchmark`, `/api/graphs`, `/api/status`, `/api/shfl_check` all HTTP 200 |
+
+## Exact Benchmark Summary
 
 | Graph | Best GPU | Time (s) | Iterations | Speedup vs CPU | Relative L1 vs SciPy | Spearman |
 |-------|----------|---------:|-----------:|---------------:|---------------------:|---------:|
-| roadNet-CA | gpu_v3_pull | 0.331933 | 57 | 20.389x | 2.175e-16 | 1.000 |
-| com-youtube | gpu_v3_push | 0.065556 | 12 | 13.260x | 3.341e-13 | 1.000 |
-| wiki-talk | gpu_v3_pull | 0.344802 | 40 | 14.805x | 2.605e-13 | 1.000 |
-| amazon0601 | gpu_v3_push | 0.041988 | 55 | 65.887x | 3.227e-16 | 1.000 |
-| soc-livejournal | gpu_v3_push | 1.171885 | 49 | 53.825x | 1.152e-14 | 1.000 |
+| roadNet-CA | gpu_v3_pull | 0.523959 | 57 | 13.424x | 2.175e-16 | 1.000 |
+| com-youtube | gpu_v3_push | 0.127168 | 12 | 9.774x | 3.320e-13 | 1.000 |
+| wiki-talk | gpu_v3_pull | 0.707204 | 40 | 8.652x | 2.597e-13 | 1.000 |
+| amazon0601 | gpu_v3_push | 0.089602 | 55 | 39.432x | 3.199e-16 | 1.000 |
+| soc-livejournal | gpu_v3_push | 2.750259 | 49 | 27.077x | 1.132e-14 | 1.000 |
 
-Performance target: `com-youtube` converged in `0.065556s`, so the <= 5s target is met.
+Performance target: `com-youtube` converged in `0.127168s`, so the <= 5s target is met.
 
-## Final Checklist
+## Manual Checklist
 
-| Item | Command | Status |
-|------|---------|--------|
-| 1 | `.\.venv\Scripts\python.exe src\cpu_baseline.py --graph data\graphs\roadNet-CA.tsv` | PASS |
-| 2 | `.\.venv\Scripts\python.exe -m pytest tests/ -v` | PASS |
-| 3 | `.\.venv\Scripts\python.exe src\benchmark.py` | PASS |
-| 4 | `Select-String -Path artifacts\benchmark_results.csv -Pattern "com-youtube"` | PASS |
-| 5 | `Select-String -Path src\gpu\*.py -Pattern "shfl_down_sync"` | PASS |
-| 6 | V1 transfer inspection with `Select-String` plus manual loop review | PASS |
+- [x] README setup commands are accurate.
+- [x] CPU baseline command works from repo root.
+- [x] Test command works from repo root.
+- [x] Benchmark command writes expected artifacts.
+- [x] Dashboard starts from repo root.
+- [x] Dashboard benchmark table API displays current CSV rows.
+- [x] Dashboard presentation mode exists; final projector fit remains a live browser check.
+- [x] No large SNAP graph files are staged.
+- [x] `git status --short` contains intended source/doc/artifact changes only.
 
-## Remaining Issues
+## Files Changed
 
-None known. Final verification: COMPLETE 10/10.
+- `requirements.txt`: added exact FastAPI/uvicorn runtime pins.
+- `artifacts/benchmark_results.csv`: regenerated by real full benchmark.
+- `artifacts/benchmark_summary.json`: regenerated by real full benchmark.
+- `artifacts/cpu_baseline_metrics.json`: regenerated by required roadNet CPU baseline command.
+- `artifacts/environment_check.json`: regenerated from current environment.
+- `artifacts/final_performance_summary.json`: regenerated from current full benchmark CSV.
+- `artifacts/synthetic_smoke_benchmark.csv`: generated by synthetic benchmark smoke.
+- `README.md`, `docs/codex_context.md`, `docs/benchmark_report.md`, `docs/feature_progress.md`, `docs/session_handoff.md`, `docs/submission_checklist.md`, `docs/final_pdf_compliance_audit.md`, `docs/ui_visualization_plan.md`: updated to match final verified state.
 
-## Dashboard UI Session - 2026-05-29
+## Known Limitations
 
-Files created or modified:
+- Full benchmark timings depend on local thermal/GPU load; current artifacts are real command output from this workspace.
+- `soc-livejournal` raw SNAP TSV includes self-loops; loader skips them consistently for CPU, GPU, and SciPy reference.
+- Large downloaded SNAP TSV files remain local and ignored by git.
 
-- `scripts/run_dashboard.py`: FastAPI/uvicorn entry point for `python scripts/run_dashboard.py`, with optional `--port`.
-- `src/ui/dashboard_server.py`: pure CSV parsing, graph detection, source checks, project status metadata, and API route setup.
-- `src/ui/templates/index.html`: offline dashboard shell with eight sections and presentation mode.
-- `src/ui/static/styles.css`: responsive light/dark UI styling with local system fonts and no CDN.
-- `src/ui/static/app.js`: vanilla JavaScript for API loading, navigation, benchmark rendering, checklist rendering, and presentation mode.
-- `tests/test_dashboard.py`: pure backend tests for CSV parsing, graph detection, and status shape.
-- `docs/ui_visualization_plan.md`: dashboard purpose, tech stack decision, file tree, API contract, section inventory, limitations.
-- `README.md`: appended Dashboard section.
+## Next Action
 
-Dashboard run command:
-
-```powershell
-python scripts/run_dashboard.py
-```
-
-Open `http://127.0.0.1:8000`.
-
-Current benchmark data status: `artifacts/benchmark_results.csv` is present with 25 data rows. Schema is per-version: `graph_name`, `version`, `n_nodes`, `n_edges`, `convergence_time_s`, `iterations`, `iter_per_sec`, `cpu_spmv_total_s`, `version_time_over_cpu`, `speedup_vs_cpu`, `relative_l1_vs_scipy`, `spearman_vs_scipy`, `target_under_5s`, `cuda_available`, `note`.
-
-Detected graph files: none in this workspace because `data/graphs/` is currently missing.
-
-Open issues and limitations:
-
-- Dashboard is visualization only and does not run `src/benchmark.py`.
-- Pytest pass status and V1 host-copy loop review remain manual checklist items.
-- The source check searches local `.cu`, `.cuh`, and Python files for `shfl_down_sync` because this project uses Numba CUDA Python source.
+Ready to submit. No known blocker.

@@ -1,68 +1,43 @@
-﻿{
-    "timestamp":  "2026-05-23T14:06:07.1341327+07:00",
-    "cuda_path":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
-    "path_cuda_entries":  [
-                              "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin",
-                              "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin\\x64"
-                          ],
-    "checks":  [
-                   {
-                       "output":  "Sat May 23 14:04:15 2026       \r\n+-----------------------------------------------------------------------------------------+\r\n| NVIDIA-SMI 591.86                 Driver Version: 591.86         CUDA Version: 13.1     |\r\n+-----------------------------------------+------------------------+----------------------+\r\n| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |\r\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\r\n|                                         |                        |               MIG M. |\r\n|=========================================+========================+======================|\r\n|   0  NVIDIA GeForce RTX 3060 ...  WDDM  |   00000000:01:00.0 Off |                  N/A |\r\n| N/A   49C    P0             27W /  115W |       0MiB /   6144MiB |      0%      Default |\r\n|                                         |                        |                  N/A |\r\n+-----------------------------------------+------------------------+----------------------+\r\n\r\n+-----------------------------------------------------------------------------------------+\r\n| Processes:                                                                              |\r\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\r\n|        ID   ID                                                               Usage      |\r\n|=========================================================================================|\r\n|    0   N/A  N/A             932    C+G   ..._cw5n1h2txyewy\\SearchHost.exe      N/A      |\r\n|    0   N/A  N/A            2660    C+G   ...cord\\app-1.0.9238\\Discord.exe      N/A      |\r\n|    0   N/A  N/A            6532    C+G   ...__2p2nqsd0c76g0\\app\\Codex.exe      N/A      |\r\n|    0   N/A  N/A            9788    C+G   ....0.3967.83\\msedgewebview2.exe      N/A      |\r\n|    0   N/A  N/A           11688    C+G   ...y\\StartMenuExperienceHost.exe      N/A      |\r\n+-----------------------------------------------------------------------------------------+",
-                       "command":  "nvidia-smi",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "nvcc: NVIDIA (R) Cuda compiler driver\r\nCopyright (c) 2005-2026 NVIDIA Corporation\r\nBuilt on Thu_Mar_19_22:28:55_Pacific_Daylight_Time_2026\r\nCuda compilation tools, release 13.2, V13.2.78\r\nBuild cuda_13.2.r13.2/compiler.37668154_0",
-                       "command":  "nvcc -V",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2\\bin\\nvcc.exe",
-                       "command":  "where.exe nvcc",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
-                       "command":  "cmd /c echo %CUDA_PATH%",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "0.65.1",
-                       "command":  ".\\.venv\\Scripts\\python.exe -c \"import numba; print(numba.__version__)\"",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "True\r\n\u003cManaged Device 0\u003e",
-                       "command":  ".\\.venv\\Scripts\\python.exe -c \"from numba import cuda; print(cuda.is_available()); print(cuda.gpus)\"",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
-                       "command":  ".\\.venv\\Scripts\\python.exe -c \"import sys; print(sys.version)\"",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "Name: numba\r\nVersion: 0.65.1\r\nSummary: compiling Python code using LLVM\r\nHome-page: https://numba.pydata.org\r\nAuthor: \r\nAuthor-email: \r\nLicense: BSD\r\nLocation: %USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\r\nRequires: llvmlite, numpy\r\nRequired-by: numba-cuda",
-                       "command":  ".\\.venv\\Scripts\\python.exe -m pip show numba",
-                       "exit_code":  0
-                   },
-                   {
-                       "output":  "Name: numba-cuda\r\nVersion: 0.30.2\r\nSummary: CUDA target for Numba\r\nHome-page: https://nvidia.github.io/numba-cuda/\r\nAuthor: Anaconda Inc., NVIDIA Corporation\r\nAuthor-email: \r\nLicense-Expression: BSD-2-Clause\r\nLocation: \u003crepo\u003e\\.venv\\Lib\\site-packages\r\nRequires: cuda-bindings, cuda-core, cuda-pathfinder, numba, packaging\r\nRequired-by:",
-                       "command":  ".\\.venv\\Scripts\\python.exe -m pip show numba-cuda",
-                       "exit_code":  0
-                   }
-               ],
-    "cuda_status":  {
-                        "nvidia_smi_found":  true,
-                        "nvcc_found":  true,
-                        "cuda_path":  "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.2",
-                        "numba_version":  "0.65.1",
-                        "numba_cuda_package_found":  true,
-                        "numba_cuda_version":  "0.30.2",
-                        "cuda_available":  true,
-                        "device_name":  "NVIDIA GeForce RTX 3060 Laptop GPU",
-                        "error":  null,
-                        "nvidia_smi":  "NVIDIA GeForce RTX 3060 Laptop GPU, 6144 MiB, 591.86",
-                        "nvcc_version":  "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Thu_Mar_19_22:28:55_Pacific_Daylight_Time_2026\nCuda compilation tools, release 13.2, V13.2.78\nBuild cuda_13.2.r13.2/compiler.37668154_0"
-                    }
+{
+  "timestamp": "2026-05-29T18:29:17+07:00",
+  "workspace": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss",
+  "python_executable": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss\\.venv\\Scripts\\python.exe",
+  "python_version": "3.12.6",
+  "checks": [
+    {
+      "command": "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader",
+      "exit_code": 0,
+      "output": "NVIDIA GeForce RTX 3060, 12288 MiB, 596.36"
+    },
+    {
+      "command": "nvcc -V",
+      "exit_code": 0,
+      "output": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Tue_Dec_16_19:27:18_Pacific_Standard_Time_2025\nCuda compilation tools, release 13.1, V13.1.115\nBuild cuda_13.1.r13.1/compiler.37061995_0"
+    },
+    {
+      "command": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss\\.venv\\Scripts\\python.exe -c import sys; print(sys.version)",
+      "exit_code": 0,
+      "output": "3.12.6 (tags/v3.12.6:a4a2d2b, Sep  6 2024, 20:11:23) [MSC v.1940 64 bit (AMD64)]"
+    },
+    {
+      "command": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss\\.venv\\Scripts\\python.exe -c import numba; print(numba.__version__)",
+      "exit_code": 0,
+      "output": "0.65.1"
+    },
+    {
+      "command": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss\\.venv\\Scripts\\python.exe -c import numba_cuda; print(numba_cuda.__version__)",
+      "exit_code": 0,
+      "output": "0.30.2"
+    },
+    {
+      "command": "C:\\Users\\Administrator\\Documents\\MEGA\\project-ltss\\.venv\\Scripts\\python.exe -c from numba import cuda; print(cuda.is_available()); print(cuda.get_current_device().name.decode() if hasattr(cuda.get_current_device().name, 'decode') else cuda.get_current_device().name) if cuda.is_available() else None",
+      "exit_code": 0,
+      "output": "True\nNVIDIA GeForce RTX 3060"
+    }
+  ],
+  "cuda_status": {
+    "cuda_available": true,
+    "device_name": "NVIDIA GeForce RTX 3060",
+    "error": null
+  }
 }

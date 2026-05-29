@@ -1,4 +1,4 @@
-# UI Visualization Plan
+﻿# UI Visualization Plan
 
 ## 1. Purpose and scope
 
@@ -6,7 +6,7 @@ This dashboard is an offline visualization surface for the LTSS C3 PageRank CUDA
 
 ## 2. Tech stack decision
 
-Phase 1 dependency audit found Flask missing, FastAPI present (`0.136.3`), and uvicorn present (`0.40.0`). The dashboard therefore uses FastAPI and uvicorn, with plain static HTML/CSS/vanilla JavaScript. No new dependency is added, no CDN is used, and the server does not require CUDA or GPU availability.
+The dashboard uses FastAPI `0.136.3` and uvicorn `0.40.0`, with plain static HTML/CSS/vanilla JavaScript. These runtime dependencies are now exact-pinned in `requirements.txt` along with their transitive packages, so a fresh `.venv` can run `scripts/run_dashboard.py`. No CDN is used, and the server does not require CUDA or GPU availability.
 
 ## 3. File tree
 
@@ -65,10 +65,14 @@ Verification Checklist combines auto-detected CSV evidence with manual command n
 
 Presentation Mode hides the dashboard shell and shows five short panels for problem, approach, correctness, performance, and current status.
 
-## 6. What the dashboard does NOT do
+## 6. Smoke test result
+
+`python scripts/run_dashboard.py --port 8000` was started locally. `/`, `/api/benchmark`, `/api/graphs`, `/api/status`, and `/api/shfl_check` all returned HTTP 200. `/api/shfl_check` reported `found=true` with `src/gpu/pagerank_v3.py`.
+
+## 7. What the dashboard does NOT do
 
 The dashboard does not run benchmarks, start CUDA work, modify CUDA code, create fake benchmark values, or write to `artifacts/benchmark_results.csv`. It only reads existing local files and displays their current state.
 
-## 7. Known limitations
+## 8. Known limitations
 
-The dashboard does not persist pytest results, so the pytest checklist item remains a manual command. The V1 host-copy loop inspection also remains manual because reliable loop-level static analysis is out of scope. The current workspace has `artifacts/benchmark_results.csv` present with 25 rows, but `data/graphs/` is missing, so the graph-file status will show no local graph TSVs until datasets are downloaded.
+The dashboard does not persist pytest results, so the pytest checklist item remains a manual command. The V1 host-copy loop inspection also remains manual because reliable loop-level static analysis is out of scope. The current workspace has `artifacts/benchmark_results.csv` present with 25 rows and `data/graphs/` present with all five required TSV files.

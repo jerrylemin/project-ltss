@@ -1,19 +1,18 @@
-# Submission Checklist
+﻿# Submission Checklist
 
-- [x] README.md day du cac muc
-- [x] requirements.txt co version pin
-- [x] `python src/cpu_baseline.py` chay exit 0
-- [x] `pytest tests/` pass
-- [x] docs/project_proposal.md day du sections
-- [x] Repo accessible tai github.com/jerrylemin/project-ltss
-- [x] artifacts/cpu_baseline_metrics.json ton tai
-- [x] artifacts/profile_summary.json ton tai
-- [x] artifacts/benchmarks.csv ton tai
-- [x] artifacts/environment_check.json ton tai
-- [x] artifacts/gpu_benchmark_summary.json ton tai khi CUDA usable
-- [x] artifacts/roadnet_ca_sample_benchmarks.csv co SNAP-derived benchmark evidence
-- [x] artifacts/synthetic_scale_benchmarks.csv co synthetic medium/large fallback evidence
-- [x] GPU code ton tai va skip sach khi khong co CUDA
-- [x] GPU smoke test pass khi CUDA kha dung
-- [x] docs/cuda_setup.md va docs/dataset_setup.md ton tai
-- [x] docs/final_pdf_compliance_audit.md ton tai
+Last updated: 2026-05-29T18:31:00+07:00
+
+- [x] README includes C3 PageRank title, Graph and Sparse track, team, setup, CUDA verification, CPU/test/benchmark/dashboard commands, benchmark results, correctness statement, push-vs-pull analysis, and final checklist.
+- [x] `requirements.txt` uses exact `==` pins and supports a fresh dashboard setup.
+- [x] `src/cpu_baseline.py --graph data/graphs/roadNet-CA.tsv` runs exit 0.
+- [x] `python -m pytest tests/ -v` passes: 21 passed.
+- [x] `python src/benchmark.py` writes `artifacts/benchmark_results.csv` with 25 data rows.
+- [x] Benchmark graphs include roadNet-CA, com-youtube, wiki-talk, amazon0601, and soc-livejournal.
+- [x] Benchmark versions include cpu_numpy, gpu_v1, gpu_v2, gpu_v3_pull, and gpu_v3_push.
+- [x] `com-youtube` target met: `gpu_v3_push` at `0.127168s` <= 5 seconds.
+- [x] Correctness vs SciPy is below `1e-6` for successful rows.
+- [x] GPU V3 source contains `cuda.shfl_down_sync`.
+- [x] Dashboard starts with `python scripts/run_dashboard.py --port 8000`.
+- [x] Dashboard APIs `/api/benchmark`, `/api/graphs`, `/api/status`, and `/api/shfl_check` return HTTP 200.
+- [x] `docs/final_pdf_compliance_audit.md` and `docs/benchmark_report.md` match current artifacts.
+- [x] Downloaded SNAP graph TSV files are not staged.
