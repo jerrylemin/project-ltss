@@ -4,6 +4,7 @@ Last updated: 2026-05-29T14:03:47+07:00
 
 ## Completed
 
+- Offline FastAPI dashboard for PageRank CUDA demo visualization, including API endpoints, local static UI, benchmark CSV rendering, graph-file status, checklist, and presentation mode.
 - CPU PageRank baseline with custom CSR timing loop and SciPy reference.
 - Optional CUDA V1/V2/V3 entry points.
 - Incoming and outgoing CSR graph structures in the loader.
@@ -22,4 +23,4 @@ Last updated: 2026-05-29T14:03:47+07:00
 
 ## Pending
 
-- None. Final verification: COMPLETE 10/10.
+- Dashboard manual browser checklist should be run during the next live UI review if a browser is available.

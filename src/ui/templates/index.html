@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LTSS PageRank CUDA Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div id="dashboard-shell" class="dashboard-shell">
+      <header class="topbar">
+        <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button>
+        <div>
+          <p class="eyebrow">LTSS Project 1 / C3</p>
+          <h1>PageRank CUDA Dashboard</h1>
+        </div>
+        <div class="topbar-badges" aria-label="Project badges">
+          <span class="badge badge-info">Graph and Sparse</span>
+          <span id="benchmark-status-badge" class="badge badge-pending">Loading data</span>
+          <span id="graph-status-badge" class="badge badge-pending">Graphs unknown</span>
+        </div>
+      </header>
+
+      <div class="app-layout">
+        <aside id="sidebar-nav" class="sidebar" aria-label="Dashboard navigation">
+          <nav>
+            <button class="nav-link active" type="button" data-section="overview">Overview</button>
+            <button class="nav-link" type="button" data-section="architecture">Architecture</button>
+            <button class="nav-link" type="button" data-section="data-structures">Data Structures</button>
+            <button class="nav-link" type="button" data-section="algorithm-comparison">Algorithm Comparison</button>
+            <button class="nav-link" type="button" data-section="push-pull">Push vs Pull</button>
+            <button class="nav-link" type="button" data-section="benchmarks">Benchmark Results</button>
+            <button class="nav-link" type="button" data-section="verification">Verification Checklist</button>
+            <button id="presentation-open" class="nav-link nav-link-strong" type="button">Presentation Mode</button>
+          </nav>
+          <button id="reload-data" class="reload-button" type="button">Reload data</button>
+        </aside>
+
+        <main class="main-content">
+          <section id="section-overview" class="section-panel active">
+            <div class="section-heading">
+              <p class="eyebrow">Overview</p>
+              <h2>Project state from local files</h2>
+            </div>
+            <div class="info-grid">
+              <article class="metric-card">
+                <span>Topic</span>
+                <strong>GPU PageRank on SNAP graphs</strong>
+              </article>
+              <article class="metric-card">
+                <span>Track</span>
+                <strong>Graph and Sparse</strong>
+              </article>
+              <article class="metric-card">
+                <span>Target graph</span>
+                <strong>com-youtube, convergence &lt; 5 seconds</strong>
+              </article>
+              <article class="metric-card">
+                <span>Correctness</span>
+                <strong>SciPy relative L1 error <= 1e-6</strong>
+              </article>
+            </div>
+            <div id="overview-empty-state" class="empty-state hidden">
+              <strong>&#9888; No benchmark data found.</strong>
+              <span>Run: <code>python src/benchmark.py</code></span>
+              <span>Then reload this page.</span>
+            </div>
+            <div id="overview-status" class="status-row" aria-live="polite"></div>
+          </section>
+
+          <section id="section-architecture" class="section-panel">
+            <div class="section-heading">
+              <p class="eyebrow">Architecture</p>
+              <h2>Data and execution pipeline</h2>
+            </div>
+            <div class="pipeline" role="img" aria-label="PageRank benchmark pipeline">
+              <div class="pipe-node node-loader">SNAP Graph TSV</div>
+              <div class="pipe-arrow">down</div>
+              <div class="pipe-node node-loader">data_loader.py</div>
+              <div class="pipe-arrow">builds both</div>
+              <div class="dual-row">
+                <div class="pipe-node node-data">Incoming CSR</div>
+                <div class="pipe-bridge">used by</div>
+                <div class="pipe-node node-data">Outgoing CSR</div>
+              </div>
+              <div class="dual-row align-top">
+                <div class="branch">
+                  <div class="pipe-arrow">down</div>
+                  <div class="pipe-node node-cpu">CPU Baseline</div>
+                  <div class="pipe-node node-cpu">SciPy Reference</div>
+                </div>
+                <div class="branch">
+                  <div class="pipe-arrow">down</div>
+                  <div class="pipe-node node-gpu">GPU V1: CSR SpMV</div>
+                  <div class="pipe-node node-gpu">GPU V2: Fused SpMV+Damping+L1</div>
+                  <div class="pipe-node node-gpu">GPU V3 Pull: Warp Shuffle</div>
+                  <div class="pipe-node node-gpu">GPU V3 Push: Atomic Scatter</div>
+                  <div class="pipe-arrow">down</div>
+                  <div class="pipe-node node-loader">benchmark.py</div>
+                  <div class="pipe-arrow">down</div>
+                  <div class="pipe-node node-output">artifacts/benchmark_results.csv</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-data-structures" class="section-panel">
+            <div class="section-heading">
+              <p class="eyebrow">Data Structures</p>
+              <h2>CSR layouts used by PageRank</h2>
+            </div>
+            <div class="csr-grid">
+              <article class="csr-card">
+                <h3>Incoming CSR</h3>
+                <table class="mini-table">
+                  <tr><th>indptr</th><td>[0, 2, 5, 7, ...]</td><td>row offsets, length = N+1</td></tr>
+                  <tr><th>indices</th><td>[3, 1, 0, 2, ...]</td><td>incoming neighbor node IDs</td></tr>
+                </table>
+              </article>
+              <article class="csr-card">
+                <h3>Outgoing CSR</h3>
+                <table class="mini-table">
+                  <tr><th>indptr</th><td>[0, 1, 4, 6, ...]</td><td>row offsets, length = N+1</td></tr>
+                  <tr><th>indices</th><td>[2, 0, 4, 5, ...]</td><td>outgoing neighbor node IDs</td></tr>
+                </table>
+              </article>
+            </div>
+            <div class="structure-notes">
+              <div><code>out_degree[v]</code><span>Scalar per node used to divide each source rank contribution.</span></div>
+              <div><code>rank[ping]</code> / <code>rank[pong]</code><span>Two rank buffers swap after each PageRank iteration to avoid overwriting the previous vector.</span></div>
+            </div>
+          </section>
+
+          <section id="section-algorithm-comparison" class="section-panel">
+            <div class="section-heading">
+              <p class="eyebrow">Algorithm Comparison</p>
+              <h2>CPU baseline through GPU V3</h2>
+            </div>
+            <div class="algo-grid">
+              <article class="algo-card"><h3>CPU</h3><strong>CPU CSR PageRank</strong><p>Outer loop: N iterations. Inner: SpMV via indptr/indices.</p><dl><dt>Memory</dt><dd>Incoming CSR scan</dd><dt>Sync</dt><dd>Host loop</dd><dt>Bottleneck</dt><dd>SpMV bandwidth</dd></dl></article>
+              <article class="algo-card"><h3>V1</h3><strong>GPU V1: CSR SpMV</strong><p>One thread per row with coalesced reads where graph structure permits.</p><dl><dt>Memory</dt><dd>Incoming CSR</dd><dt>Sync</dt><dd>Global reduction</dd><dt>Bottleneck</dt><dd>Reduction and launch overhead</dd></dl></article>
+              <article class="algo-card"><h3>V2</h3><strong>GPU V2: Fused</strong><p>SpMV, damping, and L1 residual calculation in one kernel.</p><dl><dt>Memory</dt><dd>CSR + rank vectors</dd><dt>Sync</dt><dd>Shared-memory reduction</dd><dt>Bottleneck</dt><dd>Irregular row lengths</dd></dl></article>
+              <article class="algo-card"><h3>V3 Pull</h3><strong>GPU V3 Pull</strong><p>Warp-level gather over incoming neighbors without atomic writes.</p><dl><dt>Memory</dt><dd>Incoming CSR</dd><dt>Sync</dt><dd><code>__shfl_down_sync</code></dd><dt>Bottleneck</dt><dd>Memory bandwidth</dd></dl></article>
+              <article class="algo-card"><h3>V3 Push</h3><strong>GPU V3 Push</strong><p>Source-owned scatter over outgoing CSR using atomic accumulation.</p><dl><dt>Memory</dt><dd>Outgoing CSR</dd><dt>Sync</dt><dd><code>atomicAdd</code></dd><dt>Bottleneck</dt><dd>Atomic contention</dd></dl></article>
+            </div>
+          </section>
+
+          <section id="section-push-pull" class="section-panel">
+            <div class="section-heading">
+              <p class="eyebrow">Push vs Pull</p>
+              <h2>Two V3 traversal strategies</h2>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table compare-table">
+                <thead><tr><th></th><th>PULL</th><th>PUSH</th></tr></thead>
+                <tbody>
+                  <tr><th>Owner</th><td>Destination node</td><td>Source node</td></tr>
+                  <tr><th>Reads</th><td>Incoming neighbors</td><td>-</td></tr>
+                  <tr><th>Writes</th><td>Own rank, no conflict</td><td>Outgoing neighbors, atomic</td></tr>
+                  <tr><th>Sync</th><td>Warp shuffle</td><td><code>atomicAdd</code></td></tr>
+                  <tr><th>Power-law perf</th><td><span class="status-good">Hub nodes read, not written</span></td><td><span class="status-bad">Hub nodes can cause atomic contention</span></td></tr>
+                  <tr><th>Bottleneck</th><td>Memory bandwidth</td><td>Atomic serialization on hubs</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="explanation">Pull usually wins on power-law graphs because high-degree destinations are read by one owning thread or warp instead of being targeted by many writers. That removes atomic conflicts from the hottest rank locations and makes the main cost a predictable gather over incoming CSR. Push can still win when outgoing traversal locality and lower contention outweigh those atomic costs.</p>
+          </section>
+
+          <section id="section-benchmarks" class="section-panel">
+            <div class="section-heading with-action">
+              <div>
+                <p class="eyebrow">Benchmark Results</p>
+                <h2>CSV-backed performance table</h2>
+              </div>
+              <button class="secondary-button" type="button" data-reload>Reload data</button>
+            </div>
+            <div id="benchmark-error" class="inline-error hidden"></div>
+            <div id="benchmark-empty-state" class="empty-state hidden">
+              <strong>&#9888; No benchmark data found.</strong>
+              <span>Run: <code>python src/benchmark.py</code></span>
+              <span>Then reload this page.</span>
+            </div>
+            <div class="table-wrap">
+              <table id="benchmark-table" class="data-table">
+                <thead><tr><th>Graph</th><th>Nodes</th><th>Edges</th><th>CPU(s)</th><th>V1(s)</th><th>V2(s)</th><th>V3-Pull(s)</th><th>V3-Push(s)</th><th>Best GPU</th><th>Speedup</th><th>L1 Error</th><th>Spearman</th><th>Iters</th><th>Tol</th><th>YT&lt;5s</th></tr></thead>
+                <tbody id="benchmark-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="section-verification" class="section-panel">
+            <div class="section-heading">
+              <p class="eyebrow">Verification Checklist</p>
+              <h2>Detected evidence and manual checks</h2>
+            </div>
+            <div id="checklist" class="checklist" aria-live="polite"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <section id="presentation-view" class="presentation-view" aria-label="Presentation mode">
+      <button id="presentation-close" class="secondary-button presentation-back" type="button">Back to dashboard</button>
+      <div class="presentation-grid">
+        <article><span>1</span><h2>Problem</h2><p>PageRank on billion-edge graphs spends most runtime in sparse matrix-vector style traversal. CPU execution is easy to verify but too slow for live iteration. GPU kernels help by exposing parallelism across graph rows, edges, and rank updates.</p></article>
+        <article><span>2</span><h2>Approach</h2><p>The project stores graphs as CSR, then moves from CPU baseline to V1 SpMV, V2 fused update, and V3 pull/push kernels. Pull gathers incoming neighbors; push scatters from source nodes.</p></article>
+        <article><span>3</span><h2>Correctness</h2><p>SciPy reference PageRank anchors validation. The dashboard reports L1 error and Spearman values from the benchmark CSV only, with no generated numbers.</p></article>
+        <article><span>4</span><h2>Performance</h2><p id="presentation-performance">Loading benchmark summary...</p></article>
+        <article><span>5</span><h2>Status</h2><p id="presentation-status">Loading checklist summary...</p></article>
+      </div>
+    </section>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

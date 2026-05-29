@@ -64,3 +64,34 @@ Performance target: `com-youtube` converged in `0.065556s`, so the <= 5s target 
 ## Remaining Issues
 
 None known. Final verification: COMPLETE 10/10.
+
+## Dashboard UI Session - 2026-05-29
+
+Files created or modified:
+
+- `scripts/run_dashboard.py`: FastAPI/uvicorn entry point for `python scripts/run_dashboard.py`, with optional `--port`.
+- `src/ui/dashboard_server.py`: pure CSV parsing, graph detection, source checks, project status metadata, and API route setup.
+- `src/ui/templates/index.html`: offline dashboard shell with eight sections and presentation mode.
+- `src/ui/static/styles.css`: responsive light/dark UI styling with local system fonts and no CDN.
+- `src/ui/static/app.js`: vanilla JavaScript for API loading, navigation, benchmark rendering, checklist rendering, and presentation mode.
+- `tests/test_dashboard.py`: pure backend tests for CSV parsing, graph detection, and status shape.
+- `docs/ui_visualization_plan.md`: dashboard purpose, tech stack decision, file tree, API contract, section inventory, limitations.
+- `README.md`: appended Dashboard section.
+
+Dashboard run command:
+
+```powershell
+python scripts/run_dashboard.py
+```
+
+Open `http://127.0.0.1:8000`.
+
+Current benchmark data status: `artifacts/benchmark_results.csv` is present with 25 data rows. Schema is per-version: `graph_name`, `version`, `n_nodes`, `n_edges`, `convergence_time_s`, `iterations`, `iter_per_sec`, `cpu_spmv_total_s`, `version_time_over_cpu`, `speedup_vs_cpu`, `relative_l1_vs_scipy`, `spearman_vs_scipy`, `target_under_5s`, `cuda_available`, `note`.
+
+Detected graph files: none in this workspace because `data/graphs/` is currently missing.
+
+Open issues and limitations:
+
+- Dashboard is visualization only and does not run `src/benchmark.py`.
+- Pytest pass status and V1 host-copy loop review remain manual checklist items.
+- The source check searches local `.cu`, `.cuh`, and Python files for `shfl_down_sync` because this project uses Numba CUDA Python source.

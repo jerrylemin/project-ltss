@@ -159,3 +159,28 @@ data/graphs local SNAP TSV files, ignored by git
 ## 10. Submission
 
 Run the final verification commands above, confirm `artifacts/benchmark_results.csv` contains all five SNAP graphs, and submit the repository with the committed benchmark artifacts and proposal docs.
+
+## Dashboard
+
+The dashboard is an offline visualization UI for presenting project architecture, CUDA PageRank variants, benchmark CSV evidence, and demo checklist status.
+
+Run:
+
+```powershell
+python scripts/run_dashboard.py
+```
+
+Open: `http://127.0.0.1:8000`
+
+| Section | Description |
+|---------|-------------|
+| Overview | Shows topic, track, target, correctness target, benchmark CSV status, graph files, and CSV mtime. |
+| Architecture | Shows the SNAP TSV to CSR to CPU/GPU benchmark pipeline. |
+| Data Structures | Shows incoming CSR, outgoing CSR, out-degree vector, and ping-pong rank buffers. |
+| Algorithm Comparison | Compares CPU, GPU V1, GPU V2, GPU V3 pull, and GPU V3 push. |
+| Push vs Pull | Explains destination-owned gather vs source-owned scatter and atomic contention. |
+| Benchmark Results | Renders `artifacts/benchmark_results.csv` without generating or changing benchmark data. |
+| Verification Checklist | Shows detected CSV/source evidence plus manual verification commands. |
+| Presentation Mode | Provides five short panels for live demo narration. |
+
+Dashboard is visualization only. Does not run benchmarks.
