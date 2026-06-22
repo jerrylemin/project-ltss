@@ -139,12 +139,13 @@ def _push_kernels() -> tuple[Callable, ...]:
     # V3-push: push-based (scatter) PageRank with warp-shuffle L1 reduction
     # McLaughlin & Bader (2014), Scalable and High Performance PageRank on GPU
     @cuda.jit
-    def pagerank_push_v3(indptr_out, indices_out, rank_in, rank_out, out_degree, damping, n_nodes, delta, conv_d):
+    def pagerank_push_v3(indptr_out, indices_out, rank_in, rank_out, out_degree, damping, n_nodes):
         """
         V3 push-based (scatter) PageRank.
         McLaughlin & Bader [2] -- Algorithm 1 (push variant).
         Each thread = one SOURCE node; scatters rank to all destinations.
-        Warp-level L1-norm reduction via shfl_down_sync follows [3].
+        Convergence is measured after scatter by exact_l1_kernel so all atomic
+        contributions are visible before the L1 delta is reduced.
         """
         src = cuda.grid(1)
         if src >= n_nodes:
@@ -156,17 +157,6 @@ def _push_kernels() -> tuple[Callable, ...]:
             for j in range(indptr_out[src], indptr_out[src + 1]):
                 dst = indices_out[j]
                 cuda.atomic.add(rank_out, dst, damping * contrib)
-
-        # --- warp-level L1 reduction for convergence ---
-        diff = abs(rank_in[src] - rank_out[src])
-        lane = src & 31
-        diff += cuda.shfl_down_sync(0xFFFFFFFF, diff, 16)
-        diff += cuda.shfl_down_sync(0xFFFFFFFF, diff, 8)
-        diff += cuda.shfl_down_sync(0xFFFFFFFF, diff, 4)
-        diff += cuda.shfl_down_sync(0xFFFFFFFF, diff, 2)
-        diff += cuda.shfl_down_sync(0xFFFFFFFF, diff, 1)
-        if lane == 0:
-            cuda.atomic.add(conv_d, 0, diff)
 
     @cuda.jit
     def exact_l1_kernel(rank_in, rank_out, conv_d):
@@ -208,8 +198,9 @@ def _run_pull_gather(graph: dict, alpha: float, tol: float, max_iter: int) -> tu
     if n == 0:
         return np.array([], dtype=np.float64), {"iterations": 0, "elapsed_seconds": 0.0, "converged": True}
 
-    start = perf_counter()
+    total_start = perf_counter()
     rank = np.full(n, 1.0 / n, dtype=np.float64)
+    h2d_start = perf_counter()
     d_indptr = cuda.to_device(indptr)
     d_indices = cuda.to_device(indices)
     d_out_degree = cuda.to_device(out_degree)
@@ -217,11 +208,14 @@ def _run_pull_gather(graph: dict, alpha: float, tol: float, max_iter: int) -> tu
     d_new_rank = cuda.device_array_like(d_rank)
     d_dangling = cuda.to_device(np.zeros(1, dtype=np.float64))
     d_delta = cuda.to_device(np.zeros(1, dtype=np.float64))
+    cuda.synchronize()
+    h2d_time = perf_counter() - h2d_start
     threads = 128
     blocks = (n + threads - 1) // threads
     converged = False
     l1_delta = float("inf")
 
+    kernel_start = perf_counter()
     for iteration in range(1, max_iter + 1):
         reset_scalar_kernel[1, 1](d_dangling)
         reset_scalar_kernel[1, 1](d_delta)
@@ -234,17 +228,26 @@ def _run_pull_gather(graph: dict, alpha: float, tol: float, max_iter: int) -> tu
             converged = True
             break
 
+    cuda.synchronize()
+    kernel_time = perf_counter() - kernel_start
+    d2h_start = perf_counter()
     rank = d_rank.copy_to_host()
+    d2h_time = perf_counter() - d2h_start
     total = float(rank.sum())
     if total > 0:
         rank /= total
 
-    elapsed = perf_counter() - start
+    elapsed = perf_counter() - total_start
     return rank, {
         "num_nodes": int(graph["num_nodes"]),
         "num_edges": int(graph["num_edges"]),
         "iterations": int(iteration),
         "elapsed_seconds": float(elapsed),
+        "h2d_time_seconds": float(h2d_time),
+        "kernel_time_seconds": float(kernel_time),
+        "d2h_time_seconds": float(d2h_time),
+        "convergence_time_seconds": float(kernel_time),
+        "total_time_seconds": float(elapsed),
         "l1_delta": float(l1_delta),
         "rank_sum": float(rank.sum()),
         "converged": bool(converged),
@@ -276,8 +279,9 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int, mode: str = "pull_
         return np.array([], dtype=np.float64), {"iterations": 0, "elapsed_seconds": 0.0, "converged": True}
     indptr_out, indices_out = _outgoing_csr_from_graph(graph)
 
-    start = perf_counter()
+    total_start = perf_counter()
     rank = np.full(n, 1.0 / n, dtype=np.float64)
+    h2d_start = perf_counter()
     d_indptr_out = cuda.to_device(indptr_out)
     d_indices_out = cuda.to_device(indices_out)
     d_out_degree = cuda.to_device(out_degree)
@@ -285,11 +289,14 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int, mode: str = "pull_
     d_new_rank = cuda.device_array_like(d_rank)
     d_dangling = cuda.to_device(np.zeros(1, dtype=np.float64))
     d_delta = cuda.to_device(np.zeros(1, dtype=np.float64))
+    cuda.synchronize()
+    h2d_time = perf_counter() - h2d_start
     threads = 128
     node_blocks = (n + threads - 1) // threads
     converged = False
     l1_delta = float("inf")
 
+    kernel_start = perf_counter()
     for iteration in range(1, max_iter + 1):
         reset_scalar_kernel[1, 1](d_dangling)
         reset_scalar_kernel[1, 1](d_delta)
@@ -298,8 +305,7 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int, mode: str = "pull_
         pagerank_push_v3[
             node_blocks,
             threads,
-        ](d_indptr_out, d_indices_out, d_rank, d_new_rank, d_out_degree, alpha, n, d_dangling, d_delta)
-        reset_scalar_kernel[1, 1](d_delta)
+        ](d_indptr_out, d_indices_out, d_rank, d_new_rank, d_out_degree, alpha, n)
         exact_l1_kernel[node_blocks, threads](d_rank, d_new_rank, d_delta)
         cuda.synchronize()
         l1_delta = float(d_delta.copy_to_host()[0])
@@ -309,16 +315,25 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int, mode: str = "pull_
             break
         d_rank, d_new_rank = d_new_rank, d_rank
 
-    elapsed = perf_counter() - start
+    cuda.synchronize()
+    kernel_time = perf_counter() - kernel_start
+    d2h_start = perf_counter()
     rank = d_rank.copy_to_host()
+    d2h_time = perf_counter() - d2h_start
     total = float(rank.sum())
     if total > 0:
         rank /= total
+    elapsed = perf_counter() - total_start
     return rank, {
         "num_nodes": int(graph["num_nodes"]),
         "num_edges": int(graph["num_edges"]),
         "iterations": int(iteration),
         "elapsed_seconds": float(elapsed),
+        "h2d_time_seconds": float(h2d_time),
+        "kernel_time_seconds": float(kernel_time),
+        "d2h_time_seconds": float(d2h_time),
+        "convergence_time_seconds": float(kernel_time),
+        "total_time_seconds": float(elapsed),
         "l1_delta": float(l1_delta),
         "rank_sum": float(rank.sum()),
         "converged": bool(converged),

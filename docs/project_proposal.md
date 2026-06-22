@@ -32,11 +32,11 @@ Measured from the final five-graph benchmark in `artifacts/benchmark_results.csv
 
 ## Performance Target
 
-PageRank on com-Youtube < 5s; 15-60x over CPU SpMV step where graph structure allows the target range. Final result: `gpu_v3_push` converged `com-youtube` in `0.065556s`.
+PageRank on com-Youtube < 5s; 15-60x over CPU SpMV step where graph structure allows the target range. Final repeat result: `gpu_v3_push` converged `com-youtube` with median `0.052838s`.
 
 ## Bottleneck Analysis
 
-Profile results in `artifacts/profile_summary.json` show `run_pagerank_cpu` and `_pagerank_numpy_loop` dominate runtime. The dominant algorithmic bottleneck is the SpMV/PageRank iteration: every iteration scans incoming CSR edges and gathers `rank[src] / out_degree[src]`.
+Profile results in `artifacts/profile_summary.json` show SpMV is `91.37%` of measured iteration time on real graph `amazon0601`. The dominant algorithmic bottleneck is the SpMV/PageRank iteration: every iteration scans incoming CSR edges and gathers `rank[src] / out_degree[src]`.
 
 ## Optimization Plan
 
@@ -53,11 +53,11 @@ CUDA is usable on the current demo machine with `numba-cuda==0.30.2`. V3 pull an
 
 | Graph | Best GPU | GPU time (s) | Speedup | Relative L1 vs SciPy |
 |-------|----------|-------------:|--------:|---------------------:|
-| roadNet-CA | gpu_v3_pull | 0.331933 | 20.389x | 2.175e-16 |
-| com-youtube | gpu_v3_push | 0.065556 | 13.260x | 3.341e-13 |
-| wiki-talk | gpu_v3_pull | 0.344802 | 14.805x | 2.605e-13 |
-| amazon0601 | gpu_v3_push | 0.041988 | 65.887x | 3.227e-16 |
-| soc-livejournal | gpu_v3_push | 1.171885 | 53.825x | 1.152e-14 |
+| roadNet-CA | gpu_v3_push | 0.062436 | 85.521x vs CPU SpMV | ~1.53e-16 |
+| com-youtube | gpu_v3_push | 0.052838 | 12.255x vs CPU SpMV | ~3.29e-13 |
+| wiki-talk | gpu_v3_pull | 0.320790 | 11.399x vs CPU SpMV | ~2.60e-13 |
+| amazon0601 | gpu_v3_push | 0.034461 | 71.090x vs CPU SpMV | ~3.21e-16 |
+| soc-livejournal | gpu_v3_push | 1.141057 | 55.056x vs CPU SpMV | ~7.91e-15 |
 
 The complete all-version result table is in `artifacts/benchmark_results.csv`.
 

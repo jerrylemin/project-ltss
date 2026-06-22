@@ -1,6 +1,6 @@
 # Setup And Run
 
-Last updated: 2026-05-29T14:03:47+07:00
+Last updated: 2026-06-13T00:00:00+07:00
 
 Create the environment:
 
@@ -15,7 +15,10 @@ Run the core checks:
 ```powershell
 .\.venv\Scripts\python.exe src\cpu_baseline.py --graph data\graphs\roadNet-CA.tsv
 .\.venv\Scripts\python.exe -m pytest tests/ -v
-.\.venv\Scripts\python.exe src\benchmark.py
+.\.venv\Scripts\python.exe src\cpu_baseline.py --graph amazon0601 --profile --output artifacts\profile_summary.json
+.\.venv\Scripts\python.exe src\benchmark.py --graphs all --repeat 5 --warmup 2 --output artifacts\benchmark_results.csv --include-transfer-timing
+.\.venv\Scripts\python.exe scripts\generate_final_report.py
+.\.venv\Scripts\jupyter.exe nbconvert --to notebook --execute notebooks\final_report.ipynb --output executed_report.ipynb
 ```
 
 Download the five required SNAP graphs locally:

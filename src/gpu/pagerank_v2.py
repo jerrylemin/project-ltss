@@ -95,8 +95,9 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int) -> tuple[np.ndarra
     if n == 0:
         return np.array([], dtype=np.float64), {"iterations": 0, "elapsed_seconds": 0.0, "converged": True}
 
-    start = perf_counter()
+    total_start = perf_counter()
     rank = np.full(n, 1.0 / n, dtype=np.float64)
+    h2d_start = perf_counter()
     d_indptr = cuda.to_device(indptr)
     d_indices = cuda.to_device(indices)
     d_out_degree = cuda.to_device(out_degree)
@@ -104,11 +105,14 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int) -> tuple[np.ndarra
     d_new_rank = cuda.device_array_like(d_rank)
     d_dangling = cuda.to_device(np.zeros(1, dtype=np.float64))
     d_delta = cuda.to_device(np.zeros(1, dtype=np.float64))
+    cuda.synchronize()
+    h2d_time = perf_counter() - h2d_start
     threads = 256
     blocks = (n + threads - 1) // threads
     converged = False
     l1_delta = float("inf")
 
+    kernel_start = perf_counter()
     for iteration in range(1, max_iter + 1):
         reset_scalar_kernel[1, 1](d_dangling)
         reset_scalar_kernel[1, 1](d_delta)
@@ -124,16 +128,25 @@ def run(graph: dict, alpha: float, tol: float, max_iter: int) -> tuple[np.ndarra
             break
         d_rank, d_new_rank = d_new_rank, d_rank
 
-    elapsed = perf_counter() - start
+    cuda.synchronize()
+    kernel_time = perf_counter() - kernel_start
+    d2h_start = perf_counter()
     rank = d_rank.copy_to_host()
+    d2h_time = perf_counter() - d2h_start
     total = float(rank.sum())
     if total > 0:
         rank /= total
+    elapsed = perf_counter() - total_start
     return rank, {
         "num_nodes": int(graph["num_nodes"]),
         "num_edges": int(graph["num_edges"]),
         "iterations": int(iteration),
         "elapsed_seconds": float(elapsed),
+        "h2d_time_seconds": float(h2d_time),
+        "kernel_time_seconds": float(kernel_time),
+        "d2h_time_seconds": float(d2h_time),
+        "convergence_time_seconds": float(kernel_time),
+        "total_time_seconds": float(elapsed),
         "l1_delta": float(l1_delta),
         "rank_sum": float(rank.sum()),
         "converged": bool(converged),

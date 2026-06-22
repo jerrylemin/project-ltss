@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from time import perf_counter
 from typing import Iterable
-import warnings
 
 import numpy as np
 
@@ -31,19 +31,6 @@ def _empty_graph(n: int, name: str) -> Graph:
 def _graph_from_arrays(src: np.ndarray, dst: np.ndarray, *, num_nodes: int | None = None, name: str = "graph") -> Graph:
     src = np.asarray(src, dtype=np.int32)
     dst = np.asarray(dst, dtype=np.int32)
-    if src.size == 0:
-        return _empty_graph(int(num_nodes or 0), name)
-
-    valid_self = src != dst
-    skipped_self_loops = int(src.size - np.count_nonzero(valid_self))
-    if skipped_self_loops:
-        warnings.warn(
-            f"Skipped {skipped_self_loops} self-loop(s); PageRank correctness is computed without them.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-        src = src[valid_self]
-        dst = dst[valid_self]
     if src.size == 0:
         return _empty_graph(int(num_nodes or 0), name)
 
@@ -93,32 +80,20 @@ def _graph_from_edges(
         n = int(num_nodes or 0)
         return _empty_graph(n, name)
 
-    filtered: list[tuple[int, int]] = []
-    skipped_self_loops = 0
-    for src, dst in raw_edges:
-        if src == dst:
-            skipped_self_loops += 1
-            continue
-        filtered.append((int(src), int(dst)))
-    if skipped_self_loops:
-        warnings.warn(
-            f"Skipped {skipped_self_loops} self-loop(s); PageRank correctness is computed without them.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+    mapped_source_edges = [(int(src), int(dst)) for src, dst in raw_edges]
 
     if num_nodes is not None:
         n = int(num_nodes)
-        mapped_edges = filtered
+        mapped_edges = mapped_source_edges
     elif remap:
-        node_ids = sorted({node for edge in filtered for node in edge})
+        node_ids = sorted({node for edge in mapped_source_edges for node in edge})
         mapping = {node_id: idx for idx, node_id in enumerate(node_ids)}
-        mapped_edges = [(mapping[src], mapping[dst]) for src, dst in filtered]
+        mapped_edges = [(mapping[src], mapping[dst]) for src, dst in mapped_source_edges]
         n = len(node_ids)
     else:
-        max_node = max(max(src, dst) for src, dst in filtered)
+        max_node = max(max(src, dst) for src, dst in mapped_source_edges)
         n = max_node + 1
-        mapped_edges = filtered
+        mapped_edges = mapped_source_edges
 
     if not mapped_edges:
         return _empty_graph(n, name)
@@ -129,14 +104,35 @@ def _graph_from_edges(
 
 
 def load_edge_list(path: str | Path, *, remap: bool = True) -> Graph:
+    graph, _timings = load_edge_list_with_timings(path, remap=remap)
+    return graph
+
+
+def load_edge_list_with_timings(path: str | Path, *, remap: bool = True) -> tuple[Graph, dict[str, float]]:
     edge_path = Path(path)
+    start = perf_counter()
     if not remap:
+        read_start = perf_counter()
         edges = np.loadtxt(edge_path, dtype=np.int32, comments="#", ndmin=2, usecols=(0, 1))
+        read_time = perf_counter() - read_start
         if edges.size == 0:
-            return _empty_graph(0, edge_path.stem)
-        return _graph_from_arrays(edges[:, 0], edges[:, 1], name=edge_path.stem)
+            graph = _empty_graph(0, edge_path.stem)
+            return graph, {
+                "load_time_seconds": perf_counter() - start,
+                "file_read_time_seconds": read_time,
+                "csr_build_time_seconds": 0.0,
+            }
+        csr_start = perf_counter()
+        graph = _graph_from_arrays(edges[:, 0], edges[:, 1], name=edge_path.stem)
+        csr_time = perf_counter() - csr_start
+        return graph, {
+            "load_time_seconds": perf_counter() - start,
+            "file_read_time_seconds": read_time,
+            "csr_build_time_seconds": csr_time,
+        }
 
     edges: list[tuple[int, int]] = []
+    read_start = perf_counter()
     with edge_path.open("r", encoding="utf-8") as fh:
         for line_number, line in enumerate(fh, start=1):
             stripped = line.strip()
@@ -151,7 +147,15 @@ def load_edge_list(path: str | Path, *, remap: bool = True) -> Graph:
                 if line_number == 1:
                     continue
                 raise
-    return _graph_from_edges(edges, name=edge_path.stem, remap=True)
+    read_time = perf_counter() - read_start
+    csr_start = perf_counter()
+    graph = _graph_from_edges(edges, name=edge_path.stem, remap=True)
+    csr_time = perf_counter() - csr_start
+    return graph, {
+        "load_time_seconds": perf_counter() - start,
+        "file_read_time_seconds": read_time,
+        "csr_build_time_seconds": csr_time,
+    }
 
 
 def make_synthetic_graph(

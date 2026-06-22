@@ -12,7 +12,7 @@ The required normalized files live under `data/graphs/`:
 - `data/graphs/amazon0601.tsv`
 - `data/graphs/soc-livejournal.tsv`
 
-The loader accepts blank lines, comment lines starting with `#`, whitespace-separated files, and CSV-style comma-separated edge lists.
+The loader accepts blank lines, comment lines starting with `#`, whitespace-separated files, and CSV-style comma-separated edge lists. Self-loops and duplicate edges are preserved because they are part of the PageRank graph semantics.
 
 ## SNAP Sources
 

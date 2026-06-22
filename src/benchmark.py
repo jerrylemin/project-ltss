@@ -13,7 +13,7 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import algorithm_params, load_config
-from src.data_loader import load_edge_list, load_graph_from_config
+from src.data_loader import load_edge_list, load_edge_list_with_timings, load_graph_from_config
 from src.gpu.cuda_utils import cuda_available, cuda_status
 from src.gpu.pagerank_gpu import run_pagerank_gpu
 from src.metrics import relative_l1_error, write_json
@@ -42,6 +42,7 @@ GPU_VERSION_MAP = {
 }
 
 VERSION_ALIASES = {
+    "cpu": "cpu_numpy",
     "v1": "gpu_v1",
     "v2": "gpu_v2",
     "v3_pull": "gpu_v3_pull",
@@ -65,6 +66,31 @@ COLUMNS = [
     "target_under_5s",
     "cuda_available",
     "note",
+    "repeat_count",
+    "warmup_count",
+    "load_time_s",
+    "preprocess_time_s",
+    "h2d_time_s",
+    "kernel_time_s",
+    "d2h_time_s",
+    "total_time_s",
+    "convergence_time_mean_s",
+    "convergence_time_median_s",
+    "convergence_time_min_s",
+    "convergence_time_max_s",
+    "convergence_time_std_s",
+    "total_time_mean_s",
+    "total_time_median_s",
+    "total_time_min_s",
+    "total_time_max_s",
+    "total_time_std_s",
+    "h2d_time_median_s",
+    "kernel_time_median_s",
+    "d2h_time_median_s",
+    "cpu_spmv_median_s",
+    "speedup_vs_cpu_spmv",
+    "speedup_vs_cpu_full",
+    "include_transfer_timing",
 ]
 
 
@@ -82,6 +108,45 @@ def _parse_csv_arg(value: str | None, default: list[str]) -> list[str]:
 
 def _normalize_versions(versions: list[str]) -> list[str]:
     return [VERSION_ALIASES.get(version, version) for version in versions]
+
+
+def _stat(values: list[float], name: str) -> float | None:
+    if not values:
+        return None
+    arr = np.asarray(values, dtype=np.float64)
+    if name == "mean":
+        return float(np.mean(arr))
+    if name == "median":
+        return float(np.median(arr))
+    if name == "min":
+        return float(np.min(arr))
+    if name == "max":
+        return float(np.max(arr))
+    if name == "std":
+        return float(np.std(arr))
+    raise ValueError(f"Unknown statistic: {name}")
+
+
+def _graph_filter_names(value: str) -> set[str] | None:
+    if value.lower() == "all":
+        return None
+    aliases = {
+        "com-youtube": "com-youtube",
+        "youtube": "com-youtube",
+        "roadnet-ca": "roadNet-CA",
+        "roadnet": "roadNet-CA",
+        "wiki-talk": "wiki-talk",
+        "wikitalk": "wiki-talk",
+        "amazon0601": "amazon0601",
+        "soc-livejournal": "soc-livejournal",
+        "soc-livejournal1": "soc-livejournal",
+        "livejournal": "soc-livejournal",
+    }
+    selected = set()
+    for raw_name in _parse_csv_arg(value, []):
+        key = raw_name.lower()
+        selected.add(aliases.get(key, raw_name))
+    return selected
 
 
 def _spearman_top_k(actual: np.ndarray, expected: np.ndarray, k: int = 1000) -> float | None:
@@ -104,24 +169,27 @@ def _spearman_top_k(actual: np.ndarray, expected: np.ndarray, k: int = 1000) -> 
 
 def _load_benchmark_graphs(args: argparse.Namespace, config: dict[str, Any]) -> list[tuple[str, str | None, dict[str, Any] | None]]:
     if args.edges_path:
-        graph = load_edge_list(args.edges_path, remap=False)
+        graph, load_timings = load_edge_list_with_timings(args.edges_path, remap=False)
         graph_name = args.graph_name or str(graph["name"])
-        return [(graph_name, args.edges_path, {**graph, "name": graph_name})]
+        return [(graph_name, args.edges_path, {**graph, "name": graph_name, "_load_timings": load_timings})]
 
     if args.synthetic:
         graph_sizes = _parse_csv_arg(args.sizes, [args.graph])
         graphs = []
         for size in graph_sizes:
             graph = load_graph_from_config(config, graph_size=size)
-            graphs.append((str(graph["name"]), None, graph))
+            graphs.append((str(graph["name"]), None, {**graph, "_load_timings": {}}))
         return graphs
 
+    selected = _graph_filter_names(args.graphs)
     graphs: list[tuple[str, str | None, dict[str, Any] | None]] = []
     for graph_name, path in BENCHMARK_GRAPHS:
+        if selected is not None and graph_name not in selected:
+            continue
         graph_path = Path(path)
         if graph_path.exists():
-            graph = load_edge_list(graph_path, remap=False)
-            graphs.append((graph_name, path, {**graph, "name": graph_name}))
+            graph, load_timings = load_edge_list_with_timings(graph_path, remap=False)
+            graphs.append((graph_name, path, {**graph, "name": graph_name, "_load_timings": load_timings}))
         else:
             graphs.append((graph_name, path, None))
     return graphs
@@ -159,6 +227,9 @@ def _benchmark_graph(
     tol: float,
     max_iter: int,
     versions: list[str],
+    repeat: int,
+    warmup: int,
+    include_transfer_timing: bool,
 ) -> list[dict[str, Any]]:
     if graph is None:
         return [
@@ -178,6 +249,9 @@ def _benchmark_graph(
                 "target_under_5s": None,
                 "cuda_available": cuda_available(),
                 "note": f"missing graph file: {path}; run python scripts/download_graphs.py",
+                "repeat_count": 0,
+                "warmup_count": warmup,
+                "include_transfer_timing": include_transfer_timing,
             }
             for version in versions
         ]
@@ -192,36 +266,80 @@ def _benchmark_graph(
     )
 
     rows: list[dict[str, Any]] = []
-    cpu_elapsed: float | None = None
-    cpu_spmv_total: float | None = None
+    load_timings = graph.get("_load_timings", {}) if graph else {}
     for version in versions:
         try:
             if version.startswith("gpu_") and not cuda_available():
                 raise RuntimeError("skipped: no cuda")
-            start = perf_counter()
-            rank, metrics = run_pagerank(graph, version, tol=tol, max_iter=max_iter, alpha=alpha)
-            measured_elapsed = perf_counter() - start
-            elapsed = float(metrics.get("elapsed_seconds", measured_elapsed))
-            if version == "cpu_numpy":
-                cpu_elapsed = elapsed
-                cpu_spmv_total = metrics.get("spmv_total_seconds")
+            if version.startswith("gpu_"):
+                for _ in range(max(0, warmup)):
+                    run_pagerank(graph, version, tol=tol, max_iter=max_iter, alpha=alpha)
+            convergence_times: list[float] = []
+            total_times: list[float] = []
+            h2d_times: list[float] = []
+            kernel_times: list[float] = []
+            d2h_times: list[float] = []
+            cpu_spmv_times: list[float] = []
+            rank = None
+            metrics: dict[str, Any] = {}
+            for _ in range(max(1, repeat)):
+                start = perf_counter()
+                rank, metrics = run_pagerank(graph, version, tol=tol, max_iter=max_iter, alpha=alpha)
+                measured_elapsed = perf_counter() - start
+                elapsed = float(metrics.get("elapsed_seconds", measured_elapsed))
+                convergence_times.append(float(metrics.get("convergence_time_seconds", elapsed)))
+                total_times.append(float(metrics.get("total_time_seconds", elapsed)))
+                h2d_times.append(float(metrics.get("h2d_time_seconds", 0.0)))
+                kernel_times.append(float(metrics.get("kernel_time_seconds", metrics.get("total_iteration_time_seconds", elapsed))))
+                d2h_times.append(float(metrics.get("d2h_time_seconds", 0.0)))
+                if "spmv_total_seconds" in metrics:
+                    cpu_spmv_times.append(float(metrics["spmv_total_seconds"]))
+            assert rank is not None
+            convergence_median = _stat(convergence_times, "median")
+            total_median = _stat(total_times, "median")
+            cpu_spmv_median = _stat(cpu_spmv_times, "median")
             rows.append(
                 {
                     "graph_name": graph_name,
                     "version": version,
                     "n_nodes": int(graph["num_nodes"]),
                     "n_edges": int(graph["num_edges"]),
-                    "convergence_time_s": elapsed,
+                    "convergence_time_s": convergence_median,
                     "iterations": int(metrics.get("iterations", 0)),
-                    "iter_per_sec": _iterations_per_second(metrics.get("iterations"), elapsed),
-                    "cpu_spmv_total_s": float(metrics["spmv_total_seconds"]) if "spmv_total_seconds" in metrics else None,
-                    "version_time_over_cpu": (elapsed / cpu_elapsed) if cpu_elapsed else None,
-                    "speedup_vs_cpu": (cpu_elapsed / elapsed) if cpu_elapsed and elapsed else None,
+                    "iter_per_sec": _iterations_per_second(metrics.get("iterations"), convergence_median),
+                    "cpu_spmv_total_s": cpu_spmv_median,
+                    "version_time_over_cpu": None,
+                    "speedup_vs_cpu": None,
                     "relative_l1_vs_scipy": relative_l1_error(rank, scipy_rank),
                     "spearman_vs_scipy": _spearman_top_k(rank, scipy_rank),
-                    "target_under_5s": graph_name == "com-youtube" and elapsed <= 5.0,
+                    "target_under_5s": graph_name == "com-youtube" and bool(convergence_median is not None and convergence_median <= 5.0),
                     "cuda_available": cuda_available(),
                     "note": str(metrics.get("fallback_note", "")),
+                    "repeat_count": int(max(1, repeat)),
+                    "warmup_count": int(warmup if version.startswith("gpu_") else 0),
+                    "load_time_s": load_timings.get("load_time_seconds"),
+                    "preprocess_time_s": load_timings.get("csr_build_time_seconds"),
+                    "h2d_time_s": _stat(h2d_times, "median"),
+                    "kernel_time_s": _stat(kernel_times, "median"),
+                    "d2h_time_s": _stat(d2h_times, "median"),
+                    "total_time_s": total_median,
+                    "convergence_time_mean_s": _stat(convergence_times, "mean"),
+                    "convergence_time_median_s": convergence_median,
+                    "convergence_time_min_s": _stat(convergence_times, "min"),
+                    "convergence_time_max_s": _stat(convergence_times, "max"),
+                    "convergence_time_std_s": _stat(convergence_times, "std"),
+                    "total_time_mean_s": _stat(total_times, "mean"),
+                    "total_time_median_s": total_median,
+                    "total_time_min_s": _stat(total_times, "min"),
+                    "total_time_max_s": _stat(total_times, "max"),
+                    "total_time_std_s": _stat(total_times, "std"),
+                    "h2d_time_median_s": _stat(h2d_times, "median"),
+                    "kernel_time_median_s": _stat(kernel_times, "median"),
+                    "d2h_time_median_s": _stat(d2h_times, "median"),
+                    "cpu_spmv_median_s": cpu_spmv_median,
+                    "speedup_vs_cpu_spmv": None,
+                    "speedup_vs_cpu_full": None,
+                    "include_transfer_timing": include_transfer_timing,
                 }
             )
         except Exception as exc:
@@ -242,15 +360,26 @@ def _benchmark_graph(
                     "target_under_5s": None,
                     "cuda_available": cuda_available(),
                     "note": str(exc),
+                    "repeat_count": 0,
+                    "warmup_count": warmup,
+                    "include_transfer_timing": include_transfer_timing,
                 }
             )
 
+    cpu_rows = [row for row in rows if row["version"] == "cpu_numpy" and row.get("convergence_time_s")]
+    cpu_full = float(cpu_rows[0]["convergence_time_s"]) if cpu_rows else None
+    cpu_spmv = float(cpu_rows[0]["cpu_spmv_median_s"]) if cpu_rows and cpu_rows[0].get("cpu_spmv_median_s") else None
     for row in rows:
-        if row["version"] != "cpu_numpy" and row["convergence_time_s"] is not None and cpu_elapsed:
-            row["version_time_over_cpu"] = float(row["convergence_time_s"]) / cpu_elapsed
-            row["speedup_vs_cpu"] = cpu_elapsed / float(row["convergence_time_s"])
-        if row["version"] != "cpu_numpy" and cpu_spmv_total:
-            row["cpu_spmv_total_s"] = cpu_spmv_total
+        if row["version"] != "cpu_numpy" and row.get("convergence_time_s") is not None:
+            elapsed = float(row["convergence_time_s"])
+            if cpu_full:
+                row["version_time_over_cpu"] = elapsed / cpu_full
+                row["speedup_vs_cpu"] = cpu_full / elapsed
+                row["speedup_vs_cpu_full"] = cpu_full / elapsed
+            if cpu_spmv:
+                row["cpu_spmv_total_s"] = cpu_spmv
+                row["cpu_spmv_median_s"] = cpu_spmv
+                row["speedup_vs_cpu_spmv"] = cpu_spmv / elapsed
     return rows
 
 
@@ -327,7 +456,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--edges-path", default=None, help="Optional single SNAP-style edge-list path.")
     parser.add_argument("--graph-name", default=None, help="Override graph name for --edges-path.")
     parser.add_argument("--versions", default=",".join(VERSIONS), help="Comma-separated versions to run.")
+    parser.add_argument("--graphs", default="all", help="'all' or comma-separated graph names from the five SNAP targets.")
     parser.add_argument("--output", default="artifacts/benchmark_results.csv")
+    parser.add_argument("--repeat", type=int, default=5, help="Timed repeats per graph/version.")
+    parser.add_argument("--warmup", type=int, default=1, help="Untimed CUDA warmup runs per GPU graph/version.")
+    parser.add_argument("--no-write-default-artifacts", action="store_true", help="Only write the requested CSV output, not benchmark_summary.json.")
+    parser.add_argument("--include-transfer-timing", action="store_true", help="Include H2D/kernel/D2H timing columns in the CSV.")
     parser.add_argument("--max-iter", type=int, default=None)
     parser.add_argument("--gpu", action="store_true", help="Compatibility flag; GPU versions are controlled by --versions.")
     parser.add_argument("--no-scipy-verify", action="store_true", help="Compatibility flag; full benchmark keeps SciPy reference enabled.")
@@ -351,6 +485,9 @@ def main(argv: list[str] | None = None) -> int:
                 tol=tol,
                 max_iter=max_iter,
                 versions=versions,
+                repeat=max(1, args.repeat),
+                warmup=max(0, args.warmup),
+                include_transfer_timing=bool(args.include_transfer_timing),
             )
         )
 
@@ -361,18 +498,23 @@ def main(argv: list[str] | None = None) -> int:
         writer.writeheader()
         writer.writerows(rows)
 
-    write_json(
-        "artifacts/benchmark_summary.json",
-        {
-            "output": str(output_path),
-            "rows": rows,
-            "cuda_status": cuda_status(),
-            "benchmark_graphs": BENCHMARK_GRAPHS,
-            "versions": versions,
-            "tolerance": tol,
-            "max_iter": max_iter,
-        },
-    )
+    if not args.no_write_default_artifacts:
+        write_json(
+            "artifacts/benchmark_summary.json",
+            {
+                "output": str(output_path),
+                "rows": rows,
+                "cuda_status": cuda_status(),
+                "benchmark_graphs": BENCHMARK_GRAPHS,
+                "versions": versions,
+                "tolerance": tol,
+                "max_iter": max_iter,
+                "repeat": max(1, args.repeat),
+                "warmup": max(0, args.warmup),
+                "self_loop_semantics": "preserved",
+                "duplicate_edge_semantics": "preserved",
+            },
+        )
 
     _print_table(rows)
     _print_speedup_ratios(rows)

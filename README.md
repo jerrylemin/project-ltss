@@ -1,20 +1,22 @@
-﻿# LTSS Project 1 - C3 PageRank
+# LTSS Project 1 - C3 PageRank
 
-Project LTSS implements PageRank for Applied Parallel Programming Topic C3, track Graph and Sparse. The repository includes a SciPy reference, custom CSR CPU timing baseline, Numba CUDA GPU V1/V2/V3 kernels, benchmark artifacts, tests, and an offline dashboard.
+Project LTSS implements GPU-accelerated PageRank for Applied Parallel Programming, track C3 PageRank, graph and sparse workloads.
 
 Team:
 
-- Le Minh, Team Leader, integration, docs, GitHub.
-- Nguyen Vu Bach, GPU kernels, benchmark, testing.
+- Le Minh: team lead, CPU baseline, integration, documentation, GitHub.
+- Nguyen Vu Bach: GPU kernels, benchmark review, testing and presentation support.
 
-## Goal
+The repository includes a SciPy correctness reference, a custom NumPy CSR CPU timing baseline, Numba CUDA GPU V1/V2/V3 kernels, repeat benchmark artifacts, tests, an executable final report notebook, and an offline dashboard.
 
-Measure a CPU PageRank baseline on sparse graphs, identify SpMV as the loop bottleneck, and accelerate the iterative PageRank kernel on GPU. Implemented variants:
+## Hardware Used
 
-- CPU NumPy custom CSR baseline with SciPy sparse correctness reference.
-- GPU V1 CSR SpMV, one thread per destination row, separate damping kernel.
-- GPU V2 fused SpMV, damping, and L1 convergence reduction.
-- GPU V3 pull gather and push scatter with warp-level `cuda.shfl_down_sync` reduction.
+Final validation in this workspace used:
+
+- GPU: NVIDIA GeForce RTX 3060 Laptop GPU, driver 591.86, 6144 MiB.
+- Python: 3.11.9 in `.venv`.
+- CUDA through Numba: `numba==0.65.1`, `numba-cuda==0.30.2`.
+- Core packages: `numpy==2.4.6`, `scipy==1.17.1`, `pandas==3.0.3`, `matplotlib==3.10.9`.
 
 ## Setup
 
@@ -26,18 +28,18 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-If Windows `python` creates a Python 3.10 environment, use Python 3.12 or 3.11 explicitly. The verified environment in this workspace is Python 3.12.6 because the pinned package set requires Python >= 3.11.
+If Windows `python` selects Python 3.10, use Python 3.11 or newer explicitly. The pinned packages require Python >= 3.11.
 
 ## CUDA Verification
 
 ```powershell
 nvidia-smi
-.\.venv\Scripts\python.exe -c "from numba import cuda; print(cuda.is_available()); print(cuda.detect())"
+.\.venv\Scripts\python.exe -c "import numpy, scipy, numba; from numba import cuda; import importlib.metadata as m; print(numpy.__version__, scipy.__version__, numba.__version__, m.version('numba-cuda'), cuda.is_available())"
 ```
 
-Verified on 2026-05-29: NVIDIA GeForce RTX 3060, CUDA available through Numba, `numba==0.65.1`, `numba-cuda==0.30.2`.
+If `cuda.is_available()` is `False`, CPU tests still run, but GPU correctness and performance cannot prove final C3 performance requirements in that environment.
 
-## Dataset Download
+## Dataset Setup
 
 Download and normalize the five required SNAP graphs into ignored local TSV files:
 
@@ -45,79 +47,124 @@ Download and normalize the five required SNAP graphs into ignored local TSV file
 .\.venv\Scripts\python.exe scripts\download_graphs.py
 ```
 
-The downloader skips comments, writes tab-separated `src dst` rows, validates non-empty output, and uses a fallback URL for `com-youtube`.
+Expected local files:
 
-## Required Commands
+- `data/graphs/roadNet-CA.tsv`
+- `data/graphs/com-youtube.tsv`
+- `data/graphs/wiki-talk.tsv`
+- `data/graphs/amazon0601.tsv`
+- `data/graphs/soc-livejournal.tsv`
+
+Downloaded graph TSVs are ignored by git. Benchmark evidence is committed under `artifacts/`.
+
+## Core Commands
+
+CPU baseline and real-graph profile:
 
 ```powershell
-.\.venv\Scripts\python.exe src\cpu_baseline.py --graph data\graphs\roadNet-CA.tsv
+.\.venv\Scripts\python.exe src\cpu_baseline.py --graph amazon0601 --profile --output artifacts\profile_summary.json
+```
+
+Correctness tests:
+
+```powershell
 .\.venv\Scripts\python.exe -m pytest tests/ -v
-.\.venv\Scripts\python.exe src\benchmark.py
+```
+
+Repeat benchmark on com-youtube:
+
+```powershell
+.\.venv\Scripts\python.exe src\benchmark.py --graphs com-youtube --versions gpu_v1,gpu_v2,gpu_v3_pull,gpu_v3_push --repeat 5 --warmup 2 --output artifacts\audit_com_youtube_repeat.csv --include-transfer-timing
+```
+
+Full final benchmark:
+
+```powershell
+.\.venv\Scripts\python.exe src\benchmark.py --graphs all --repeat 5 --warmup 2 --output artifacts\benchmark_results.csv --include-transfer-timing
+```
+
+Final report notebook:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_final_report.py
+.\.venv\Scripts\jupyter.exe nbconvert --to notebook --execute notebooks\final_report.ipynb --output executed_report.ipynb
+```
+
+Dashboard:
+
+```powershell
 .\.venv\Scripts\python.exe scripts\run_dashboard.py --port 8000
 ```
+
+Open `http://127.0.0.1:8000`.
+
+## PageRank Semantics
+
+The recurrence is:
+
+```text
+r_new = alpha * A * r + (1 - alpha) * e
+```
+
+`A` is represented through incoming CSR for pull/gather and outgoing CSR for push/scatter. The implementation preserves directed edges, self-loops, and duplicate edges consistently across CPU, SciPy, and GPU paths.
+
+Dangling nodes have zero out-degree. Each iteration redistributes dangling rank mass uniformly to all nodes, applies damping, normalizes the rank vector to sum to 1, and stops by L1 norm at tolerance `1e-6`.
+
+## Benchmark Methodology
+
+The final benchmark uses:
+
+- `--repeat 5` timed runs per graph/version.
+- `--warmup 2` untimed CUDA runs for GPU versions to exclude Numba JIT compilation.
+- `cuda.synchronize()` before/after timed GPU regions inside the GPU runners.
+- Separate CSV columns for load/preprocess, H2D, kernel/convergence, D2H, total, mean, median, min, max, and standard deviation.
+- Same graph, tolerance, and max iteration settings for CPU and GPU.
 
 ## Final Benchmark Results
 
-Generated by `python src\benchmark.py` on 2026-05-29. Correctness is relative L1 error vs SciPy at tolerance `1e-6`.
+Generated by:
 
-| Graph | Version | Nodes | Edges | Time (s) | Iterations | Iter/s | Speedup vs CPU | Rel L1 vs SciPy | Spearman |
-|-------|---------|------:|------:|---------:|-----------:|-------:|---------------:|----------------:|---------:|
-| roadNet-CA | cpu_numpy | 1,971,281 | 5,533,214 | 7.033380 | 57 | 8.104 | 1.000 | 2.107e-16 | 1.000 |
-| roadNet-CA | gpu_v1 | 1,971,281 | 5,533,214 | 1.060414 | 57 | 53.753 | 6.633 | 2.175e-16 | 1.000 |
-| roadNet-CA | gpu_v2 | 1,971,281 | 5,533,214 | 0.583561 | 57 | 97.676 | 12.052 | 2.175e-16 | 1.000 |
-| roadNet-CA | gpu_v3_pull | 1,971,281 | 5,533,214 | 0.523959 | 57 | 108.787 | 13.424 | 2.175e-16 | 1.000 |
-| roadNet-CA | gpu_v3_push | 1,971,281 | 5,533,214 | 0.728247 | 57 | 78.270 | 9.658 | 1.965e-16 | 1.000 |
-| com-youtube | cpu_numpy | 1,157,828 | 2,987,624 | 1.242953 | 12 | 9.654 | 1.000 | 1.297e-16 | 1.000 |
-| com-youtube | gpu_v1 | 1,157,828 | 2,987,624 | 0.816734 | 12 | 14.693 | 1.522 | 3.301e-13 | 1.000 |
-| com-youtube | gpu_v2 | 1,157,828 | 2,987,624 | 0.662915 | 12 | 18.102 | 1.875 | 3.320e-13 | 1.000 |
-| com-youtube | gpu_v3_pull | 1,157,828 | 2,987,624 | 0.163095 | 12 | 73.577 | 7.621 | 3.324e-13 | 1.000 |
-| com-youtube | gpu_v3_push | 1,157,828 | 2,987,624 | 0.127168 | 12 | 94.363 | 9.774 | 3.320e-13 | 1.000 |
-| wiki-talk | gpu_v3_pull | 2,394,385 | 5,021,410 | 0.707204 | 40 | 56.561 | 8.652 | 2.597e-13 | 1.000 |
-| wiki-talk | gpu_v3_push | 2,394,385 | 5,021,410 | 1.114908 | 40 | 35.877 | 5.488 | 2.614e-13 | 1.000 |
-| amazon0601 | gpu_v3_pull | 403,394 | 3,387,388 | 0.344521 | 55 | 159.642 | 10.255 | 1.666e-16 | 1.000 |
-| amazon0601 | gpu_v3_push | 403,394 | 3,387,388 | 0.089602 | 55 | 613.826 | 39.432 | 3.199e-16 | 1.000 |
-| soc-livejournal | gpu_v3_pull | 4,847,571 | 68,475,391 | 3.025258 | 49 | 16.197 | 24.616 | 1.128e-14 | 1.000 |
-| soc-livejournal | gpu_v3_push | 4,847,571 | 68,475,391 | 2.750259 | 49 | 17.817 | 27.077 | 1.132e-14 | 1.000 |
+```powershell
+.\.venv\Scripts\python.exe src\benchmark.py --graphs all --repeat 5 --warmup 2 --output artifacts\benchmark_results.csv --include-transfer-timing
+```
 
-The complete 25-row table is saved in `artifacts/benchmark_results.csv`.
+| Graph | Best GPU | Nodes | Edges | Iterations | Median GPU time (s) | CPU SpMV median (s) | Speedup vs CPU SpMV | Rel L1 vs SciPy |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| roadNet-CA | gpu_v3_push | 1,971,281 | 5,533,214 | 57 | 0.062436 | 5.339604 | 85.521x | 1.533e-16 |
+| com-youtube | gpu_v3_push | 1,157,828 | 2,987,624 | 12 | 0.052838 | 0.647530 | 12.255x | 3.291e-13 |
+| wiki-talk | gpu_v3_pull | 2,394,385 | 5,021,410 | 40 | 0.320790 | 3.656651 | 11.399x | 2.601e-13 |
+| amazon0601 | gpu_v3_push | 403,394 | 3,387,388 | 55 | 0.034461 | 2.449847 | 71.090x | 3.214e-16 |
+| soc-livejournal | gpu_v3_push | 4,847,571 | 68,993,773 | 51 | 1.141057 | 62.821708 | 55.056x | 7.910e-15 |
 
-## Performance Target
+`com-youtube` target: PageRank convergence at tolerance `1e-6` in <= 5 seconds.
 
-`com-youtube` target: convergence at tolerance `1e-6` in <= 5 seconds.
-
-Measured best GPU result: `gpu_v3_push`, `0.127168s`, `12` iterations, relative L1 error `3.320e-13` vs SciPy.
+Measured best repeat-median result: `gpu_v3_push`, `0.052838s`, relative L1 error about `3.29e-13` vs SciPy.
 
 Status: `TARGET MET`.
 
-## Push vs Pull Analysis
+## Expected Outputs
 
-Pull assigns one thread per destination node and gathers incoming rank contributions without atomic scatter. It wins on roadNet-CA and wiki-talk in this run.
+- `artifacts/profile_summary.json`
+- `artifacts/cpu_baseline_metrics.json`
+- `artifacts/audit_com_youtube_repeat.csv`
+- `artifacts/benchmark_results.csv`
+- `artifacts/benchmark_summary.json`
+- `notebooks/final_report.ipynb`
+- `notebooks/executed_report.ipynb`
 
-Push assigns one thread per source node and scatters contributions to destinations with `atomic.add`. It wins on com-youtube, amazon0601, and soc-livejournal where outgoing traversal locality beats pull-side cost.
+## Team Evidence
 
-| Graph | V3-pull (s) | V3-push (s) | Winner |
-|-------|------------:|------------:|--------|
-| roadNet-CA | 0.523959 | 0.728247 | pull |
-| com-youtube | 0.163095 | 0.127168 | push |
-| wiki-talk | 0.707204 | 1.114908 | pull |
-| amazon0601 | 0.344521 | 0.089602 | push |
-| soc-livejournal | 3.025258 | 2.750259 | push |
+Visible git history shows two author identities using the same email family: `jerrylemin <jerryle.minh.3@gmail.com>` and `Le Minh <jerryle.minh.3@gmail.com>`. The repository cannot prove balanced contribution by commit author alone, so presentation ownership is documented in `docs/team_plan.md`.
 
-## Dashboard
+## Known Limitations
 
-Run:
+- GPU timings vary with thermal state, Windows WDDM scheduling, and background GPU load.
+- The benchmark reports transfer and kernel timing boundaries but not hardware occupancy counters.
+- Large SNAP graph files are intentionally not committed.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\run_dashboard.py --port 8000
-```
+## Troubleshooting
 
-Open `http://127.0.0.1:8000`. The dashboard is offline visualization only: it reads CSV/source evidence and does not run benchmarks or CUDA work.
-
-## Submission Checklist
-
-- [x] CPU baseline command works from repo root.
-- [x] `python -m pytest tests/ -v` passes.
-- [x] `python src/benchmark.py` writes a 25-row five-graph table.
-- [x] `com-youtube` best GPU time is under 5 seconds.
-- [x] Dashboard starts and API endpoints return HTTP 200 JSON.
-- [x] Downloaded SNAP TSVs remain untracked under `data/graphs/`.
+- If CUDA is unavailable, run `nvidia-smi` and verify the installed NVIDIA driver.
+- If `numba-cuda` cannot find the CUDA toolkit, open a new terminal after installing CUDA or set `CUDA_PATH`.
+- If dependency installation fails on Python 3.10, recreate `.venv` with Python 3.11+.
+- If the notebook command cannot find `jupyter`, rerun `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`.

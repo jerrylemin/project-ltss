@@ -48,6 +48,31 @@ def scipy_pagerank(graph, alpha=0.85, tol=TOL, max_iter=200):
     return rank
 
 
+def scipy_pagerank_from_edges(edges, n, alpha=0.85, tol=TOL, max_iter=200):
+    """Raw-edge SciPy reference that preserves self-loops and duplicate edges."""
+    if not edges:
+        return np.full(n, 1.0 / n, dtype=np.float64)
+
+    src = np.asarray([edge[0] for edge in edges], dtype=np.int64)
+    dst = np.asarray([edge[1] for edge in edges], dtype=np.int64)
+    out_degree = np.bincount(src, minlength=n).astype(np.int64)
+    data = 1.0 / out_degree[src].astype(np.float64)
+    matrix = sp.csr_matrix((data, (dst, src)), shape=(n, n))
+    rank = np.full(n, 1.0 / n, dtype=np.float64)
+    base = (1.0 - alpha) / n
+
+    for _ in range(max_iter):
+        dangling_mass = float(rank[out_degree == 0].sum())
+        new_rank = base + alpha * (matrix @ rank + dangling_mass / n)
+        total = float(new_rank.sum())
+        if total > 0:
+            new_rank /= total
+        if float(np.abs(new_rank - rank).sum()) < tol:
+            return np.asarray(new_rank, dtype=np.float64)
+        rank = np.asarray(new_rank, dtype=np.float64)
+    return rank
+
+
 def numpy_pagerank(graph, tol=TOL):
     rank, _metrics = run_pagerank_cpu(graph, tol=tol, mode="numpy_loop", verify_scipy=False)
     return rank
@@ -73,6 +98,13 @@ def relative_l1_error(actual, expected):
     return np.sum(np.abs(actual - expected)) / np.sum(np.abs(expected))
 
 
+def assert_valid_rank(rank):
+    assert not np.any(np.isnan(rank)), "NaN in rank vector"
+    assert not np.any(np.isinf(rank)), "Inf in rank vector"
+    assert not np.any(rank < -1e-12), "Negative rank value"
+    assert abs(np.sum(rank) - 1.0) < 1e-5, "Rank vector does not sum to 1"
+
+
 def test_cpu_vs_scipy_synthetic():
     """CPU NumPy CSR must match SciPy within 1e-6 L1 relative error."""
     graph = make_synthetic_graph()
@@ -89,6 +121,70 @@ def test_cpu_dangling_node():
     assert not np.any(np.isnan(r)), "NaN in rank vector with dangling node"
     assert not np.any(np.isinf(r)), "Inf in rank vector with dangling node"
     assert abs(np.sum(r) - 1.0) < 1e-5, "Rank vector does not sum to 1"
+
+
+def test_loader_preserves_self_loops_in_csr_structures():
+    edges = [(0, 0), (0, 1), (1, 2), (2, 0)]
+    graph = _graph_from_edges(edges, num_nodes=3, name="self_loop", remap=False)
+
+    assert graph["num_edges"] == 4
+    assert graph["out_degree"].tolist() == [2, 1, 1]
+    assert graph["indices"][graph["indptr"][0] : graph["indptr"][1]].tolist() == [0, 2]
+    assert graph["indices_out"][graph["indptr_out"][0] : graph["indptr_out"][1]].tolist() == [0, 1]
+
+
+def test_self_loop_graph_matches_raw_edge_scipy_reference_cpu():
+    edges = [(0, 0), (0, 1), (1, 2), (2, 0)]
+    graph = _graph_from_edges(edges, num_nodes=3, name="self_loop", remap=False)
+    r_cpu = numpy_pagerank(graph, tol=TOL)
+    r_scipy = scipy_pagerank_from_edges(edges, 3)
+
+    assert_valid_rank(r_cpu)
+    assert relative_l1_error(r_cpu, r_scipy) < TOL
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+@pytest.mark.parametrize("version", ["v1", "v2", "v3_pull", "v3_push"])
+def test_self_loop_graph_matches_raw_edge_scipy_reference_gpu(version):
+    edges = [(0, 0), (0, 1), (1, 2), (2, 0)]
+    graph = _graph_from_edges(edges, num_nodes=3, name="self_loop", remap=False)
+    r_gpu, _ = run_pagerank_gpu(graph, tol=TOL, version=version)
+    r_scipy = scipy_pagerank_from_edges(edges, 3)
+
+    assert_valid_rank(r_gpu)
+    assert relative_l1_error(r_gpu, r_scipy) < TOL
+
+
+def test_self_loop_with_dangling_node_matches_scipy_cpu():
+    edges = [(0, 0), (1, 1), (2, 0), (2, 1)]
+    graph = _graph_from_edges(edges, num_nodes=4, name="self_loop_dangling", remap=False)
+    r_cpu = numpy_pagerank(graph, tol=TOL)
+    r_scipy = scipy_pagerank_from_edges(edges, 4)
+
+    assert_valid_rank(r_cpu)
+    assert relative_l1_error(r_cpu, r_scipy) < TOL
+
+
+@pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")
+@pytest.mark.parametrize("version", ["v1", "v2", "v3_pull", "v3_push"])
+def test_self_loop_with_dangling_node_matches_scipy_gpu(version):
+    edges = [(0, 0), (1, 1), (2, 0), (2, 1)]
+    graph = _graph_from_edges(edges, num_nodes=4, name="self_loop_dangling", remap=False)
+    r_gpu, _ = run_pagerank_gpu(graph, tol=TOL, version=version)
+    r_scipy = scipy_pagerank_from_edges(edges, 4)
+
+    assert_valid_rank(r_gpu)
+    assert relative_l1_error(r_gpu, r_scipy) < TOL
+
+
+def test_single_node_self_loop_is_valid_cpu():
+    edges = [(0, 0)]
+    graph = _graph_from_edges(edges, num_nodes=1, name="single_self_loop", remap=False)
+    r_cpu = numpy_pagerank(graph, tol=TOL)
+
+    assert graph["num_edges"] == 1
+    assert_valid_rank(r_cpu)
+    assert r_cpu[0] == pytest.approx(1.0)
 
 
 @pytest.mark.skipif(not cuda.is_available(), reason="CUDA not available")

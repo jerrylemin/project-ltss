@@ -1,28 +1,24 @@
 # Bottleneck Decision
 
-Last updated: 2026-05-23T06:41:13.618860+00:00
+Last updated: 2026-06-13
 
-The dominant bottleneck is the PageRank iteration SpMV step: each iteration scans the incoming CSR structure and gathers `rank[src] / out_degree[src]` for every edge.
+The dominant CPU bottleneck is the PageRank SpMV step: each iteration scans incoming CSR edges and gathers `rank[src] / out_degree[src]` for every destination.
 
-This makes the project a good fit for partial GPU acceleration because the graph traversal and vector update are repeated many times while configuration, loading, validation, and reporting remain on CPU.
+This is measured on a real SNAP graph, not inferred from synthetic smoke data.
 
 ## Profile Summary
 
-- Graph: synthetic_small
-- Nodes: 1000
-- Edges: 5000
-- Elapsed seconds: 0.1396284000002197
-- Iterations: 16
+- Graph: `amazon0601`
+- Nodes: `403,394`
+- Edges: `3,387,388`
+- Iterations: `55`
+- Full convergence time: `2.821893s`
+- Total measured iteration compute time: `2.819990s`
+- SpMV time: `2.573286s`
+- Damping time: `0.084791s`
+- L1 convergence time: `0.099163s`
+- SpMV percentage of iteration time: `91.37%`
 
-## Top Functions by Cumulative Time
+## Decision
 
-- `pagerank_cpu.py:91:run_pagerank_cpu`: cumtime=0.139642s, calls=1
-- `pagerank_cpu.py:9:_pagerank_numpy_loop`: cumtime=0.139621s, calls=1
-- `fromnumeric.py:2177:sum`: cumtime=0.080612s, calls=15888
-- `fromnumeric.py:71:_wrapreduction`: cumtime=0.060105s, calls=15888
-- `~:0:<method 'reduce' of 'numpy.ufunc' objects>`: cumtime=0.027181s, calls=15937
-- `fromnumeric.py:72:<dictcomp>`: cumtime=0.010763s, calls=15888
-- `~:0:<built-in method builtins.isinstance>`: cumtime=0.003260s, calls=15888
-- `fromnumeric.py:2172:_sum_dispatcher`: cumtime=0.002517s, calls=15888
-- `~:0:<method 'items' of 'dict' objects>`: cumtime=0.001847s, calls=15888
-- `~:0:<method 'sum' of 'numpy.ndarray' objects>`: cumtime=0.000159s, calls=49
+SpMV remains the correct GPU acceleration target. Damping, dangling mass, normalization, and L1 convergence are smaller but still worth fusing or reducing on device, which is why V2 fuses SpMV+damping+L1 and V3 uses warp-level shuffle reduction.
